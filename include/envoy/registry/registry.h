@@ -164,9 +164,9 @@ public:
 
     ret.reserve(factories().size());
 
-    for (const auto& factory : factories()) {
-      if (factory.second || include_disabled) {
-        ret.push_back(factory.first);
+    for (const auto& [name, factory_base] : factories()) {
+      if (factory_base || include_disabled) {
+        ret.push_back(name);
       }
     }
 
@@ -261,9 +261,9 @@ public:
     absl::string_view canonicalName = canonicalFactoryName(name);
 
     // Next, disable the factory by all its deprecated names.
-    for (const auto& entry : deprecatedFactoryNames()) {
-      if (entry.second == canonicalName) {
-        disable(entry.first);
+    for (const auto& [name, instead_value] : deprecatedFactoryNames()) {
+      if (instead_value == canonicalName) {
+        disable(name);
       }
     }
 
@@ -464,21 +464,20 @@ private:
                   prev_by_name->name(), prev_by_name->configType());
       }
 
-      for (auto mapping : prev_deprecated_names) {
-        deprecatedFactoryNames().erase(mapping.first);
+      for (auto [name, mapped_name] : prev_deprecated_names) {
+        deprecatedFactoryNames().erase(name);
 
-        ENVOY_LOG(info, "Removed deprecated name '{}'", mapping.first);
+        ENVOY_LOG(info, "Removed deprecated name '{}'", name);
 
-        if (!mapping.second.empty()) {
-          deprecatedFactoryNames().emplace(std::make_pair(mapping.first, mapping.second));
+        if (!mapped_name.empty()) {
+          deprecatedFactoryNames().emplace(std::make_pair(name, mapped_name));
 
-          auto* deprecated_factory = getFactory(mapping.second);
+          auto* deprecated_factory = getFactory(mapped_name);
           RELEASE_ASSERT(deprecated_factory != nullptr,
                          "failed to restore deprecated factory name");
-          factories().emplace(mapping.second, deprecated_factory);
+          factories().emplace(mapped_name, deprecated_factory);
 
-          ENVOY_LOG(info, "Restored deprecated name '{}' (mapped to '{}'", mapping.first,
-                    mapping.second);
+          ENVOY_LOG(info, "Restored deprecated name '{}' (mapped to '{}'", name, mapped_name);
         }
       }
 
