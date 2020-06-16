@@ -145,22 +145,21 @@ void WatchMap::onConfigUpdate(
   }
 
   // We just bundled up the updates into nice per-watch packages. Now, deliver them.
-  for (const auto& added : per_watch_added) {
-    const Watch* cur_watch = added.first;
+  for (const auto& [cur_watch, resource] : per_watch_added) {
     const auto removed = per_watch_removed.find(cur_watch);
     if (removed == per_watch_removed.end()) {
       // additions only, no removals
-      cur_watch->callbacks_.onConfigUpdate(added.second, {}, system_version_info);
+      cur_watch->callbacks_.onConfigUpdate(resource, {}, system_version_info);
     } else {
       // both additions and removals
-      cur_watch->callbacks_.onConfigUpdate(added.second, removed->second, system_version_info);
+      cur_watch->callbacks_.onConfigUpdate(resource, removed->second, system_version_info);
       // Drop the removals now, so the final removals-only pass won't use them.
       per_watch_removed.erase(removed);
     }
   }
   // Any removals-only updates will not have been picked up in the per_watch_added loop.
-  for (auto& removed : per_watch_removed) {
-    removed.first->callbacks_.onConfigUpdate({}, removed.second, system_version_info);
+  for (auto& [cur_watch, resource] : per_watch_removed) {
+    cur_watch->callbacks_.onConfigUpdate({}, resource, system_version_info);
   }
 }
 

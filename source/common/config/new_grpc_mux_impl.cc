@@ -80,8 +80,8 @@ void NewGrpcMuxImpl::onEstablishmentFailure() {
   absl::flat_hash_map<std::string, DeltaSubscriptionState*> all_subscribed;
   absl::flat_hash_map<std::string, DeltaSubscriptionState*> already_called;
   do {
-    for (auto& sub : subscriptions_) {
-      all_subscribed[sub.first] = &sub.second->sub_state_;
+    for (auto& [type_url, sub_stuff] : subscriptions_) {
+      all_subscribed[type_url] = &sub_stuff->sub_state_;
     }
     for (auto& sub : all_subscribed) {
       if (already_called.insert(sub).second) { // insert succeeded ==> not already called
