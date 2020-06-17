@@ -64,17 +64,16 @@ StatName StatMerger::DynamicContext::makeDynamicStatName(const std::string& name
 
 void StatMerger::mergeCounters(const Protobuf::Map<std::string, uint64_t>& counter_deltas,
                                const DynamicsMap& dynamic_map) {
-  for (const auto& counter : counter_deltas) {
-    const std::string& name = counter.first;
+  for (const auto& [name, counter] : counter_deltas) {
     StatMerger::DynamicContext dynamic_context(temp_scope_->symbolTable());
     StatName stat_name = dynamic_context.makeDynamicStatName(name, dynamic_map);
-    temp_scope_->counterFromStatName(stat_name).add(counter.second);
+    temp_scope_->counterFromStatName(stat_name).add(counter);
   }
 }
 
 void StatMerger::mergeGauges(const Protobuf::Map<std::string, uint64_t>& gauges,
                              const DynamicsMap& dynamic_map) {
-  for (const auto& gauge : gauges) {
+  for (const auto& [gauge_name, new_parent_value] : gauges) {
     // Merging gauges via RPC from the parent has 3 cases; case 1 and 3b are the
     // most common.
     //
@@ -96,7 +95,7 @@ void StatMerger::mergeGauges(const Protobuf::Map<std::string, uint64_t>& gauges,
     //     retained.
 
     StatMerger::DynamicContext dynamic_context(temp_scope_->symbolTable());
-    StatName stat_name = dynamic_context.makeDynamicStatName(gauge.first, dynamic_map);
+    StatName stat_name = dynamic_context.makeDynamicStatName(gauge_name, dynamic_map);
     GaugeOptConstRef gauge_opt = temp_scope_->findGauge(stat_name);
 
     Gauge::ImportMode import_mode = Gauge::ImportMode::Uninitialized;
@@ -126,7 +125,6 @@ void StatMerger::mergeGauges(const Protobuf::Map<std::string, uint64_t>& gauges,
 
     uint64_t& parent_value_ref = parent_gauge_values_[gauge_ref.statName()];
     uint64_t old_parent_value = parent_value_ref;
-    uint64_t new_parent_value = gauge.second;
     parent_value_ref = new_parent_value;
 
     // Note that new_parent_value may be less than old_parent_value, in which

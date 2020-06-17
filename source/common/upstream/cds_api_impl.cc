@@ -48,8 +48,8 @@ void CdsApiImpl::onConfigUpdate(const Protobuf::RepeatedPtrField<ProtobufWkt::An
     clusters_to_remove.erase(clusters.back().name());
   }
   Protobuf::RepeatedPtrField<std::string> to_remove_repeated;
-  for (const auto& cluster : clusters_to_remove) {
-    *to_remove_repeated.Add() = cluster.first;
+  for (const auto& [name, cluster] : clusters_to_remove) {
+    *to_remove_repeated.Add() = name;
   }
   Protobuf::RepeatedPtrField<envoy::service::discovery::v3::Resource> to_add_repeated;
   for (const auto& cluster : clusters) {

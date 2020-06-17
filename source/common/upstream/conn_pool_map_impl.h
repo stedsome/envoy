@@ -56,8 +56,8 @@ ConnPoolMap<KEY_TYPE, POOL_TYPE>::getPool(KEY_TYPE key, const PoolFactory& facto
     new_pool->addDrainedCallback(cb);
   }
 
-  auto inserted = active_pools_.emplace(key, std::move(new_pool));
-  return std::ref(*inserted.first->second);
+  auto [inserted_iter, status] = active_pools_.emplace(key, std::move(new_pool));
+  return std::ref(*inserted_iter->second);
 }
 
 template <typename KEY_TYPE, typename POOL_TYPE>

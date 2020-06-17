@@ -169,27 +169,32 @@ parseExtensionProtocolOptions(const envoy::config::cluster::v3::Cluster& config,
 
   std::map<std::string, ProtocolOptionsConfigConstSharedPtr> options;
 
-  for (const auto& it : config.typed_extension_protocol_options()) {
+  for (const auto& [config_name, protocol_config] : config.typed_extension_protocol_options()) {
     // TODO(zuercher): canonicalization may be removed when deprecated filter names are removed
     // We only handle deprecated network filter names here because no existing HTTP filter has
     // protocol options.
-    auto& name = Extensions::NetworkFilters::Common::FilterNameUtil::canonicalFilterName(it.first);
+    // const auto&[config_name, protocol_config] = it;
+    auto& name =
+        Extensions::NetworkFilters::Common::FilterNameUtil::canonicalFilterName(config_name);
 
     auto object = createProtocolOptionsConfig(
-        name, it.second, ProtobufWkt::Struct::default_instance(), validation_visitor);
+        name, protocol_config, ProtobufWkt::Struct::default_instance(), validation_visitor);
     if (object != nullptr) {
       options[name] = std::move(object);
     }
   }
 
-  for (const auto& it : config.hidden_envoy_deprecated_extension_protocol_options()) {
+  for (const auto& [config_name, protocol_config] :
+       config.hidden_envoy_deprecated_extension_protocol_options()) {
     // TODO(zuercher): canonicalization may be removed when deprecated filter names are removed
     // We only handle deprecated network filter names here because no existing HTTP filter has
     // protocol options.
-    auto& name = Extensions::NetworkFilters::Common::FilterNameUtil::canonicalFilterName(it.first);
+    // const auto&[config_name, protocol_config] = it;
+    auto& name =
+        Extensions::NetworkFilters::Common::FilterNameUtil::canonicalFilterName(config_name);
 
-    auto object = createProtocolOptionsConfig(name, ProtobufWkt::Any::default_instance(), it.second,
-                                              validation_visitor);
+    auto object = createProtocolOptionsConfig(name, ProtobufWkt::Any::default_instance(),
+                                              protocol_config, validation_visitor);
     if (object != nullptr) {
       options[name] = std::move(object);
     }

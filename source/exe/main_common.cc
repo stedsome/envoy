@@ -94,10 +94,10 @@ MainCommonBase::MainCommonBase(const OptionsImpl& options, Event::TimeSystem& ti
 }
 
 void MainCommonBase::configureComponentLogLevels() {
-  for (auto& component_log_level : options_.componentLogLevels()) {
-    Logger::Logger* logger_to_change = Logger::Registry::logger(component_log_level.first);
+  for (auto& [log_name, log_level] : options_.componentLogLevels()) {
+    Logger::Logger* logger_to_change = Logger::Registry::logger(log_name);
     ASSERT(logger_to_change);
-    logger_to_change->setLevel(component_log_level.second);
+    logger_to_change->setLevel(log_level);
   }
 }
 
