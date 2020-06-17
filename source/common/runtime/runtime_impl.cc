@@ -289,9 +289,9 @@ SnapshotImpl::SnapshotImpl(RandomGenerator& generator, RuntimeStats& stats,
                            std::vector<OverrideLayerConstPtr>&& layers)
     : layers_{std::move(layers)}, generator_{generator}, stats_{stats} {
   for (const auto& layer : layers_) {
-    for (const auto& kv : layer->values()) {
-      values_.erase(kv.first);
-      values_.emplace(kv.first, kv.second);
+    for (const auto& [key, value] : layer->values()) {
+      values_.erase(key);
+      values_.emplace(key, value);
     }
   }
   stats.num_keys_.set(values_.size());
@@ -361,10 +361,10 @@ void SnapshotImpl::parseEntryFractionalPercentValue(Entry& entry) {
 }
 
 void AdminLayer::mergeValues(const std::unordered_map<std::string, std::string>& values) {
-  for (const auto& kv : values) {
-    values_.erase(kv.first);
-    if (!kv.second.empty()) {
-      values_.emplace(kv.first, SnapshotImpl::createEntry(kv.second));
+  for (const auto& [key, val] : values) {
+    values_.erase(key);
+    if (!val.empty()) {
+      values_.emplace(key, SnapshotImpl::createEntry(val));
     }
   }
   stats_.admin_overrides_active_.set(values_.empty() ? 0 : 1);
@@ -434,8 +434,8 @@ void DiskLayer::walkDirectory(const std::string& path, const std::string& prefix
 
 ProtoLayer::ProtoLayer(absl::string_view name, const ProtobufWkt::Struct& proto)
     : OverrideLayerImpl{name} {
-  for (const auto& f : proto.fields()) {
-    walkProtoValue(f.second, f.first);
+  for (const auto& [prefix, value] : proto.fields()) {
+    walkProtoValue(value, prefix);
   }
 }
 
@@ -460,8 +460,8 @@ void ProtoLayer::walkProtoValue(const ProtobufWkt::Value& v, const std::string& 
       values_.emplace(prefix, SnapshotImpl::createEntry(v));
       break;
     }
-    for (const auto& f : s.fields()) {
-      walkProtoValue(f.second, prefix + "." + f.first);
+    for (const auto& [field_key, field_value] : s.fields()) {
+      walkProtoValue(field_value, prefix + "." + field_key);
     }
     break;
   }

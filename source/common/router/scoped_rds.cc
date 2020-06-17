@@ -317,13 +317,13 @@ void ScopedRdsConfigSubscription::onConfigUpdate(
         MessageUtil::anyConvertAndValidate<envoy::config::route::v3::ScopedRouteConfiguration>(
             resource_any, validation_visitor_);
     const std::string scope_name = scoped_route.name();
-    auto scope_config_inserted = scoped_routes.try_emplace(scope_name, std::move(scoped_route));
-    if (!scope_config_inserted.second) {
+    const auto [it, emplace_status] =
+        scoped_routes.try_emplace(scope_name, std::move(scoped_route));
+    if (!emplace_status) {
       throw EnvoyException(
           fmt::format("duplicate scoped route configuration '{}' found", scope_name));
     }
-    const envoy::config::route::v3::ScopedRouteConfiguration& scoped_route_config =
-        scope_config_inserted.first->second;
+    const envoy::config::route::v3::ScopedRouteConfiguration& scoped_route_config = it->second;
     const uint64_t key_fingerprint = MessageUtil::hash(scoped_route_config.key());
     if (!scope_name_by_key_hash.try_emplace(key_fingerprint, scope_name).second) {
       throw EnvoyException(
@@ -334,17 +334,16 @@ void ScopedRdsConfigSubscription::onConfigUpdate(
   ScopedRouteMap scoped_routes_to_remove = scoped_route_map_;
   Protobuf::RepeatedPtrField<envoy::service::discovery::v3::Resource> to_add_repeated;
   Protobuf::RepeatedPtrField<std::string> to_remove_repeated;
-  for (auto& iter : scoped_routes) {
-    const std::string& scope_name = iter.first;
+  for (auto& [scope_name, route] : scoped_routes) {
     scoped_routes_to_remove.erase(scope_name);
     auto* to_add = to_add_repeated.Add();
     to_add->set_name(scope_name);
     to_add->set_version(version_info);
-    to_add->mutable_resource()->PackFrom(iter.second);
+    to_add->mutable_resource()->PackFrom(route);
   }
 
-  for (const auto& scoped_route : scoped_routes_to_remove) {
-    *to_remove_repeated.Add() = scoped_route.first;
+  for (const auto& [scope_name, route] : scoped_routes_to_remove) {
+    *to_remove_repeated.Add() = scope_name;
   }
   onConfigUpdate(to_add_repeated, to_remove_repeated, version_info);
 }

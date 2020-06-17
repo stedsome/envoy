@@ -721,8 +721,8 @@ RequestMessagePtr Utility::prepareHeaders(const envoy::config::core::v3::HttpUri
 std::string Utility::queryParamsToString(const QueryParams& params) {
   std::string out;
   std::string delim = "?";
-  for (const auto& p : params) {
-    absl::StrAppend(&out, delim, p.first, "=", p.second);
+  for (const auto& [name, value] : params) {
+    absl::StrAppend(&out, delim, name, "=", value);
     delim = "&";
   }
   return out;

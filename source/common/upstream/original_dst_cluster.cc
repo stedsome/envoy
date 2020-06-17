@@ -146,9 +146,7 @@ void OriginalDstCluster::cleanup() {
   auto host_map = getCurrentHostMap();
   if (!host_map->empty()) {
     ENVOY_LOG(trace, "Cleaning up stale original dst hosts.");
-    for (const auto& pair : *host_map) {
-      const std::string& addr = pair.first;
-      const HostSharedPtr& host = pair.second;
+    for (const auto& [addr, host] : *host_map) {
       if (host->used()) {
         ENVOY_LOG(trace, "Keeping active host {}.", addr);
         keeping_hosts->emplace_back(host);
