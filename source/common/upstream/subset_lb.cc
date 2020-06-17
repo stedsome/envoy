@@ -369,9 +369,7 @@ void SubsetLoadBalancer::processSubsets(
   std::unordered_set<LbSubsetEntryPtr> subsets_modified;
 
   std::pair<const HostVector&, bool> steps[] = {{hosts_added, true}, {hosts_removed, false}};
-  for (const auto& step : steps) {
-    const auto& hosts = step.first;
-    const bool adding_hosts = step.second;
+  for (const auto& [hosts, adding_hosts] : steps) {
     for (const auto& host : hosts) {
       for (const auto& subset_selector : subset_selectors_) {
         const auto& keys = subset_selector->selectorKeys();
@@ -515,14 +513,14 @@ std::string SubsetLoadBalancer::describeMetadata(const SubsetLoadBalancer::Subse
 
   std::ostringstream buf;
   bool first = true;
-  for (const auto& it : kvs) {
+  for (const auto& [key, val] : kvs) {
     if (!first) {
       buf << ", ";
     } else {
       first = false;
     }
 
-    buf << it.first << "=" << MessageUtil::getJsonStringFromMessage(it.second);
+    buf << key << "=" << MessageUtil::getJsonStringFromMessage(val);
   }
 
   return buf.str();
@@ -535,8 +533,7 @@ SubsetLoadBalancer::findOrCreateSubset(LbSubsetMap& subsets, const SubsetMetadat
                                        uint32_t idx) {
   ASSERT(idx < kvs.size());
 
-  const std::string& name = kvs[idx].first;
-  const ProtobufWkt::Value& pb_value = kvs[idx].second;
+  const auto& [name, pb_value] = kvs[idx];
   const HashedValue value(pb_value);
 
   LbSubsetEntryPtr entry;

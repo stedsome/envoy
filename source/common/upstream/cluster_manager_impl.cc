@@ -716,7 +716,7 @@ void ClusterManagerImpl::loadCluster(const envoy::config::cluster::v3::Cluster& 
                                      ClusterMap& cluster_map) {
   std::pair<ClusterSharedPtr, ThreadAwareLoadBalancerPtr> new_cluster_pair =
       factory_.clusterFromProto(cluster, *this, outlier_event_logger_, added_via_api);
-  auto& new_cluster = new_cluster_pair.first;
+  auto& [new_cluster, load_balancer_ptr] = new_cluster_pair;
   Cluster& cluster_reference = *new_cluster;
 
   if (!added_via_api) {
@@ -727,14 +727,14 @@ void ClusterManagerImpl::loadCluster(const envoy::config::cluster::v3::Cluster& 
   }
 
   if (cluster_reference.info()->lbType() == LoadBalancerType::ClusterProvided &&
-      new_cluster_pair.second == nullptr) {
+      load_balancer_ptr == nullptr) {
     throw EnvoyException(fmt::format("cluster manager: cluster provided LB specified but cluster "
                                      "'{}' did not provide one. Check cluster documentation.",
                                      new_cluster->info()->name()));
   }
 
   if (cluster_reference.info()->lbType() != LoadBalancerType::ClusterProvided &&
-      new_cluster_pair.second != nullptr) {
+      load_balancer_ptr != nullptr) {
     throw EnvoyException(
         fmt::format("cluster manager: cluster provided LB not specified but cluster "
                     "'{}' provided one. Check cluster documentation.",
@@ -781,7 +781,7 @@ void ClusterManagerImpl::loadCluster(const envoy::config::cluster::v3::Cluster& 
           cluster_reference.info()->lbConfig());
     }
   } else if (cluster_reference.info()->lbType() == LoadBalancerType::ClusterProvided) {
-    cluster_entry_it->second->thread_aware_lb_ = std::move(new_cluster_pair.second);
+    cluster_entry_it->second->thread_aware_lb_ = std::move(load_balancer_ptr);
   }
 
   updateClusterCounts();
@@ -970,16 +970,16 @@ ClusterManagerImpl::ThreadLocalClusterManagerImpl::ThreadLocalClusterManagerImpl
                             ? &thread_local_clusters_[local_cluster_name.value()]->priority_set_
                             : nullptr;
 
-  for (auto& cluster : parent.active_clusters_) {
+  for (auto& [active_cluster_name, cluster_data] : parent.active_clusters_) {
     // If local cluster name is set then we already initialized this cluster.
-    if (local_cluster_name && local_cluster_name.value() == cluster.first) {
+    if (local_cluster_name && local_cluster_name.value() == active_cluster_name) {
       continue;
     }
 
-    ENVOY_LOG(debug, "adding TLS initial cluster {}", cluster.first);
-    ASSERT(thread_local_clusters_.count(cluster.first) == 0);
-    thread_local_clusters_[cluster.first] = std::make_unique<ClusterEntry>(
-        *this, cluster.second->cluster_->info(), cluster.second->loadBalancerFactory());
+    ENVOY_LOG(debug, "adding TLS initial cluster {}", active_cluster_name);
+    ASSERT(thread_local_clusters_.count(active_cluster_name) == 0);
+    thread_local_clusters_[active_cluster_name] = std::make_unique<ClusterEntry>(
+        *this, cluster_data->cluster_->info(), cluster_data->loadBalancerFactory());
   }
 }
 
