@@ -131,10 +131,8 @@ void HealthCheckFilter::onComplete() {
                !cluster_min_healthy_percentages_->empty()) {
       // Check the status of the specified upstream cluster(s) to determine the right response.
       auto& clusterManager = context_.clusterManager();
-      for (const auto& item : *cluster_min_healthy_percentages_) {
+      for (const auto& [cluster_name, min_healthy_percentage] : *cluster_min_healthy_percentages_) {
         details = &RcDetails::get().HealthCheckClusterHealthy;
-        const std::string& cluster_name = item.first;
-        const uint64_t min_healthy_percentage = static_cast<uint64_t>(item.second);
         auto* cluster = clusterManager.get(cluster_name);
         if (cluster == nullptr) {
           // If the cluster does not exist at all, consider the service unhealthy.

@@ -12,13 +12,12 @@ DecoderStateMachine::onDecodeStreamHeader(Buffer::Instance& buffer) {
   ASSERT(!active_stream_);
 
   auto metadata = std::make_shared<MessageMetadata>();
-  auto ret = protocol_.decodeHeader(buffer, metadata);
-  if (!ret.second) {
+  auto [context, decode_status] = protocol_.decodeHeader(buffer, metadata);
+  if (!decode_status) {
     ENVOY_LOG(debug, "dubbo decoder: need more data for {} protocol", protocol_.name());
     return {ProtocolState::WaitForData};
   }
 
-  auto context = ret.first;
   if (metadata->message_type() == MessageType::HeartbeatRequest ||
       metadata->message_type() == MessageType::HeartbeatResponse) {
     if (buffer.length() < (context->header_size() + context->body_size())) {

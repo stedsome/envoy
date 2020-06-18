@@ -133,8 +133,8 @@ public:
     // Fetch all of the functions to be exported to Lua so that we can register them in the
     // metatable.
     ExportedFunctions functions = T::exportedFunctions();
-    for (auto function : functions) {
-      to_register.push_back({function.first, function.second});
+    for (auto [function_name, function_ptr] : functions) {
+      to_register.push_back({function_name, function_ptr});
     }
 
     // Always register a __gc method so that we can run the object's destructor. We do this

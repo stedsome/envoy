@@ -48,8 +48,8 @@ void Cluster::startPreInit() {
   if (!existing_hosts.empty()) {
     std::shared_ptr<HostInfoMap> new_host_map;
     std::unique_ptr<Upstream::HostVector> hosts_added;
-    for (const auto& existing_host : existing_hosts) {
-      addOrUpdateWorker(existing_host.first, existing_host.second, new_host_map, hosts_added);
+    for (const auto& [existing_host, host_Info] : existing_hosts) {
+      addOrUpdateWorker(existing_host, host_Info, new_host_map, hosts_added);
     }
     swapAndUpdateMap(new_host_map, *hosts_added, {});
   }
@@ -103,7 +103,7 @@ void Cluster::addOrUpdateWorker(
   if (new_host_map == nullptr) {
     new_host_map = std::make_shared<HostInfoMap>(*current_map);
   }
-  const auto emplaced =
+  const auto& [emplaced_iter, emplaced_status] =
       new_host_map->try_emplace(host, host_info,
                                 std::make_shared<Upstream::LogicalHost>(
                                     info(), host, host_info->address(), dummy_locality_lb_endpoint_,
@@ -111,7 +111,7 @@ void Cluster::addOrUpdateWorker(
   if (hosts_added == nullptr) {
     hosts_added = std::make_unique<Upstream::HostVector>();
   }
-  hosts_added->emplace_back(emplaced.first->second.logical_host_);
+  hosts_added->emplace_back(emplaced_iter->second.logical_host_);
 }
 
 void Cluster::onDnsHostAddOrUpdate(

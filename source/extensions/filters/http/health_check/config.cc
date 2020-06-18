@@ -40,8 +40,9 @@ Http::FilterFactoryCb HealthCheckFilterConfig::createFilterFactoryFromProtoTyped
   ClusterMinHealthyPercentagesConstSharedPtr cluster_min_healthy_percentages;
   if (!pass_through_mode && !proto_config.cluster_min_healthy_percentages().empty()) {
     auto cluster_to_percentage = std::make_unique<ClusterMinHealthyPercentages>();
-    for (const auto& item : proto_config.cluster_min_healthy_percentages()) {
-      cluster_to_percentage->emplace(std::make_pair(item.first, item.second.value()));
+    for (const auto& [cluster_name, min_healthy_percentage] :
+         proto_config.cluster_min_healthy_percentages()) {
+      cluster_to_percentage->emplace(std::make_pair(cluster_name, min_healthy_percentage.value()));
     }
     cluster_min_healthy_percentages = std::move(cluster_to_percentage);
   }

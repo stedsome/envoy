@@ -206,6 +206,7 @@ CompressorFilter::chooseEncoding(const Http::ResponseHeaderMap& headers) const {
   for (const auto token : StringUtil::splitToken(*accept_encoding_, ",", false /* keep_empty */)) {
     EncPair pair =
         std::make_pair(StringUtil::trim(StringUtil::cropRight(token, ";")), static_cast<float>(1));
+    const auto& [pair_encoding, pair_q_value] = pair;
     const auto params = StringUtil::cropLeft(token, ";");
     if (params != token) {
       const auto q_value = StringUtil::cropLeft(params, "=");
@@ -221,14 +222,14 @@ CompressorFilter::chooseEncoding(const Http::ResponseHeaderMap& headers) const {
 
     pairs.push_back(pair);
 
-    if (!pair.second) {
+    if (!pair_q_value) {
       // Disallow compressors with "q=0".
       // The reason why we add encodings to "pairs" even with "q=0" is that "pairs" contains
       // client's expectations and "allowed_compressors" is what Envoy can handle. Consider
       // the cases of "Accept-Encoding: gzip;q=0, deflate, *" and "Accept-Encoding: deflate, *"
       // whereas the proxy has only "gzip" configured. If we just exclude the encodings with "q=0"
       // from "pairs" then upon noticing "*" we don't know if "gzip" is acceptable by the client.
-      allowed_compressors.erase(std::string(pair.first));
+      allowed_compressors.erase(std::string(pair_encoding));
     }
   }
 
@@ -243,16 +244,18 @@ CompressorFilter::chooseEncoding(const Http::ResponseHeaderMap& headers) const {
   // Find intersection of encodings accepted by the user agent and provided
   // by the allowed compressors and choose the one with the highest q-value.
   EncPair choice{Http::Headers::get().AcceptEncodingValues.Identity, static_cast<float>(0)};
+  const auto& [choice_encoding, choice_q_value] = choice;
   for (const auto& pair : pairs) {
-    if ((pair.second > choice.second) &&
-        (allowed_compressors.count(std::string(pair.first)) ||
-         pair.first == Http::Headers::get().AcceptEncodingValues.Identity ||
-         pair.first == Http::Headers::get().AcceptEncodingValues.Wildcard)) {
+    const auto& [pair_encoding, pair_q_value] = pair;
+    if ((pair_q_value > choice_q_value) &&
+        (allowed_compressors.count(std::string(pair_encoding)) ||
+         pair_encoding == Http::Headers::get().AcceptEncodingValues.Identity ||
+         pair_encoding == Http::Headers::get().AcceptEncodingValues.Wildcard)) {
       choice = pair;
     }
   }
 
-  if (!choice.second) {
+  if (!choice_q_value) {
     // The value of "Accept-Encoding" must be invalid as we ended up with zero q-value.
     return std::make_unique<CompressorFilter::EncodingDecision>(
         Http::Headers::get().AcceptEncodingValues.Identity,
@@ -260,14 +263,14 @@ CompressorFilter::chooseEncoding(const Http::ResponseHeaderMap& headers) const {
   }
 
   // The "identity" encoding (no compression) is always available.
-  if (choice.first == Http::Headers::get().AcceptEncodingValues.Identity) {
+  if (choice_encoding == Http::Headers::get().AcceptEncodingValues.Identity) {
     return std::make_unique<CompressorFilter::EncodingDecision>(
         Http::Headers::get().AcceptEncodingValues.Identity,
         CompressorFilter::EncodingDecision::HeaderStat::Identity);
   }
 
   // If wildcard is given then use which ever compressor is registered first.
-  if (choice.first == Http::Headers::get().AcceptEncodingValues.Wildcard) {
+  if (choice_encoding == Http::Headers::get().AcceptEncodingValues.Wildcard) {
     auto first_registered = std::min_element(
         allowed_compressors.begin(), allowed_compressors.end(),
         [](const std::pair<std::string, uint32_t>& a,
@@ -277,7 +280,8 @@ CompressorFilter::chooseEncoding(const Http::ResponseHeaderMap& headers) const {
   }
 
   return std::make_unique<CompressorFilter::EncodingDecision>(
-      std::string(choice.first), CompressorFilter::EncodingDecision::HeaderStat::ValidCompressor);
+      std::string(choice_encoding),
+      CompressorFilter::EncodingDecision::HeaderStat::ValidCompressor);
 }
 
 // Check if this filter was chosen to compress. Also update the filter's stat counters related to

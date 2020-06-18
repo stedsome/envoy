@@ -113,10 +113,10 @@ void ZooKeeperFilter::setDynamicMetadata(
       (*dynamic_metadata.mutable_filter_metadata())[NetworkFilterNames::get().ZooKeeperProxy]);
   auto& fields = *metadata.mutable_fields();
 
-  for (const auto& pair : data) {
+  for (const auto& [data_key, data_val] : data) {
     auto val = ProtobufWkt::Value();
-    val.set_string_value(pair.second);
-    fields.insert({pair.first, val});
+    val.set_string_value(data_val);
+    fields.insert({data_key, val});
   }
 
   read_callbacks_->connection().streamInfo().setDynamicMetadata(

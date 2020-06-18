@@ -32,8 +32,9 @@ bool RedisClusterLoadBalancerFactory::onClusterSlotUpdate(ClusterSlotsPtr&& slot
     // look in the updated map
     const std::string master_address = slot.master()->asString();
 
-    auto result = shards.try_emplace(master_address, shard_vector->size());
-    if (result.second) {
+    const auto& [emplace_iter, emplace_status] =
+        shards.try_emplace(master_address, shard_vector->size());
+    if (emplace_status) {
       auto master_host = all_hosts.find(master_address);
       ASSERT(master_host != all_hosts.end(),
              "we expect all address to be found in the updated_hosts");
@@ -55,7 +56,7 @@ bool RedisClusterLoadBalancerFactory::onClusterSlotUpdate(ClusterSlotsPtr&& slot
     }
 
     for (auto i = slot.start(); i <= slot.end(); ++i) {
-      updated_slots->at(i) = result.first->second;
+      updated_slots->at(i) = emplace_iter->second;
     }
   }
 
