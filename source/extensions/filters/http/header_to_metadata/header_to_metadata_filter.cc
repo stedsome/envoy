@@ -164,9 +164,7 @@ void HeaderToMetadataFilter::writeHeaderToMetadata(Http::HeaderMap& headers,
                                                    Http::StreamFilterCallbacks& callbacks) {
   StructMap structs_by_namespace;
 
-  for (const auto& rulePair : rules) {
-    const auto& header = rulePair.first;
-    const auto& rule = rulePair.second;
+  for (const auto& [header, rule] : rules) {
     const Http::HeaderEntry* header_entry = headers.get(header);
 
     if (header_entry != nullptr && rule.has_on_header_present()) {
@@ -201,8 +199,8 @@ void HeaderToMetadataFilter::writeHeaderToMetadata(Http::HeaderMap& headers,
 
   // Any matching rules?
   if (!structs_by_namespace.empty()) {
-    for (auto const& entry : structs_by_namespace) {
-      callbacks.streamInfo().setDynamicMetadata(entry.first, entry.second);
+    for (auto const& [struct_name, struct_value] : structs_by_namespace) {
+      callbacks.streamInfo().setDynamicMetadata(struct_name, struct_value);
     }
   }
 }

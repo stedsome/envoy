@@ -39,10 +39,10 @@ void BrokerData::encode(ProtobufWkt::Struct& data_struct) {
   if (!broker_addrs_.empty()) {
     ProtobufWkt::Value brokerAddrsNode;
     auto& brokerAddrsMembers = *(brokerAddrsNode.mutable_struct_value()->mutable_fields());
-    for (auto& entry : broker_addrs_) {
+    for (auto& [broker_key, broker_addr] : broker_addrs_) {
       ProtobufWkt::Value address_v;
-      address_v.set_string_value(entry.second);
-      brokerAddrsMembers[std::to_string(entry.first)] = address_v;
+      address_v.set_string_value(broker_addr);
+      brokerAddrsMembers[std::to_string(broker_key)] = address_v;
     }
     members["brokerAddrs"] = brokerAddrsNode;
   }

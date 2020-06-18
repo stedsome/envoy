@@ -24,9 +24,9 @@ void FilterConfigImpl::init() {
 
   if (proto_config_.has_filter_state_rules()) {
     filter_state_name_ = proto_config_.filter_state_rules().name();
-    for (const auto& it : proto_config_.filter_state_rules().requires()) {
+    for (const auto& [key, requirement] : proto_config_.filter_state_rules().requires()) {
       filter_state_verifiers_.emplace(
-          it.first, Verifier::create(it.second, proto_config_.providers(), *this));
+          key, Verifier::create(requirement, proto_config_.providers(), *this));
     }
   }
 }

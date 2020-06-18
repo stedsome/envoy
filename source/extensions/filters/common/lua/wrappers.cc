@@ -79,10 +79,10 @@ void MetadataMapHelper::setValue(lua_State* state, const ProtobufWkt::Value& val
 void MetadataMapHelper::createTable(lua_State* state,
                                     const Protobuf::Map<std::string, ProtobufWkt::Value>& fields) {
   lua_createtable(state, 0, fields.size());
-  for (const auto& field : fields) {
+  for (const auto& [field_key, field_val] : fields) {
     int top = lua_gettop(state);
-    lua_pushstring(state, field.first.c_str());
-    setValue(state, field.second);
+    lua_pushstring(state, field_key.c_str());
+    setValue(state, field_val);
     lua_settable(state, top);
   }
 }

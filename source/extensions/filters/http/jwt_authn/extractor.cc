@@ -183,9 +183,8 @@ ExtractorImpl::extract(const Http::RequestHeaderMap& headers) const {
   std::vector<JwtLocationConstPtr> tokens;
 
   // Check header locations first
-  for (const auto& location_it : header_locations_) {
-    const auto& location_spec = location_it.second;
-    ENVOY_LOG(debug, "extract {}", location_it.first);
+  for (const auto& [param_key, location_spec] : header_locations_) {
+    ENVOY_LOG(debug, "extract {}", param_key);
     const Http::HeaderEntry* entry = headers.get(location_spec->header_);
     if (entry) {
       auto value_str = entry->value().getStringView();
@@ -209,9 +208,7 @@ ExtractorImpl::extract(const Http::RequestHeaderMap& headers) const {
 
   // Check query parameter locations.
   const auto& params = Http::Utility::parseQueryString(headers.getPathValue());
-  for (const auto& location_it : param_locations_) {
-    const auto& param_key = location_it.first;
-    const auto& location_spec = location_it.second;
+  for (const auto& [param_key, location_spec] : param_locations_) {
     const auto& it = params.find(param_key);
     if (it != params.end()) {
       tokens.push_back(std::make_unique<const JwtParamLocation>(

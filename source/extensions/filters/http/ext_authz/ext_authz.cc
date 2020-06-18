@@ -170,19 +170,19 @@ void Filter::onComplete(Filters::Common::ExtAuthz::ResponsePtr&& response) {
       ENVOY_STREAM_LOG(debug, "ext_authz is clearing route cache", *callbacks_);
       callbacks_->clearRouteCache();
     }
-    for (const auto& header : response->headers_to_set) {
-      ENVOY_STREAM_LOG(trace, "'{}':'{}'", *callbacks_, header.first.get(), header.second);
-      request_headers_->setCopy(header.first, header.second);
+    for (const auto& [header_key, header_val] : response->headers_to_set) {
+      ENVOY_STREAM_LOG(trace, "'{}':'{}'", *callbacks_, header_key.get(), header_val);
+      request_headers_->setCopy(header_key, header_val);
     }
-    for (const auto& header : response->headers_to_add) {
-      ENVOY_STREAM_LOG(trace, "'{}':'{}'", *callbacks_, header.first.get(), header.second);
-      request_headers_->addCopy(header.first, header.second);
+    for (const auto& [header_key, header_val] : response->headers_to_add) {
+      ENVOY_STREAM_LOG(trace, "'{}':'{}'", *callbacks_, header_key.get(), header_val);
+      request_headers_->setCopy(header_key, header_val);
     }
-    for (const auto& header : response->headers_to_append) {
-      const Http::HeaderEntry* header_to_modify = request_headers_->get(header.first);
+    for (const auto& [header_key, header_val] : response->headers_to_append) {
+      const Http::HeaderEntry* header_to_modify = request_headers_->get(header_key);
       if (header_to_modify) {
-        ENVOY_STREAM_LOG(trace, "'{}':'{}'", *callbacks_, header.first.get(), header.second);
-        request_headers_->appendCopy(header.first, header.second);
+        ENVOY_STREAM_LOG(trace, "'{}':'{}'", *callbacks_, header_key.get(), header_val);
+        request_headers_->appendCopy(header_key, header_val);
       }
     }
     if (cluster_) {
@@ -222,14 +222,14 @@ void Filter::onComplete(Filters::Common::ExtAuthz::ResponsePtr&& response) {
                            "ext_authz filter added header(s) to the local response:", callbacks);
           // First remove all headers requested by the ext_authz filter,
           // to ensure that they will override existing headers
-          for (const auto& header : headers) {
-            response_headers.remove(header.first);
+          for (const auto& [header_key, header_val] : headers) {
+            response_headers.remove(header_key);
           }
           // Then set all of the requested headers, allowing the
           // same header to be set multiple times, e.g. `Set-Cookie`
-          for (const auto& header : headers) {
-            ENVOY_STREAM_LOG(trace, " '{}':'{}'", callbacks, header.first.get(), header.second);
-            response_headers.addCopy(header.first, header.second);
+          for (const auto& [header_key, header_val] : headers) {
+            ENVOY_STREAM_LOG(trace, " '{}':'{}'", callbacks, header_key.get(), header_val);
+            response_headers.addCopy(header_key, header_val);
           }
         },
         absl::nullopt, RcDetails::get().AuthzDenied);

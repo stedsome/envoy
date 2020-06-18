@@ -57,8 +57,8 @@ RouteEntryImplBase::WeightedClusterEntry::WeightedClusterEntry(const RouteEntryI
 ParameterRouteEntryImpl::ParameterRouteEntryImpl(
     const envoy::extensions::filters::network::dubbo_proxy::v3::Route& route)
     : RouteEntryImplBase(route) {
-  for (auto& config : route.match().method().params_match()) {
-    parameter_data_list_.emplace_back(config.first, config.second);
+  for (auto& [index, config] : route.match().method().params_match()) {
+    parameter_data_list_.emplace_back(index, config);
   }
 }
 

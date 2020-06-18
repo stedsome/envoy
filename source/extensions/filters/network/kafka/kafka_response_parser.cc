@@ -29,9 +29,9 @@ ResponseParseResponse ResponseHeaderParser::parse(absl::string_view& data) {
     context_->correlation_id_ = correlation_id_deserializer_.get();
 
     // We have correlation id now, so we can see what is the expected response api key & version.
-    const ExpectedResponseSpec spec = getResponseSpec(context_->correlation_id_);
-    context_->api_key_ = spec.first;
-    context_->api_version_ = spec.second;
+    const auto [spec_key, spec_version] = getResponseSpec(context_->correlation_id_);
+    context_->api_key_ = spec_key;
+    context_->api_version_ = spec_version;
 
     // Mark that version data has been set, so we do not attempt to re-initialize again.
     context_->api_info_set_ = true;
