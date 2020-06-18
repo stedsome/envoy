@@ -296,8 +296,8 @@ void Filter::jsonizeRequest(Http::RequestHeaderMap const& headers, const Buffer:
 
   // Wrap the Query String
   if (headers.Path()) {
-    for (auto&& kv_pair : Http::Utility::parseQueryString(headers.getPathValue())) {
-      json_req.mutable_query_string_parameters()->insert({kv_pair.first, kv_pair.second});
+    for (auto&& [query_key, query_val] : Http::Utility::parseQueryString(headers.getPathValue())) {
+      json_req.mutable_query_string_parameters()->insert({query_key, query_val});
     }
   }
 
@@ -336,12 +336,12 @@ void Filter::dejsonizeResponse(Http::ResponseHeaderMap& headers, const Buffer::I
     return;
   }
 
-  for (auto&& kv : json_resp.headers()) {
+  for (auto&& [header_key, header] : json_resp.headers()) {
     // ignore H2 pseudo-headers (if any)
-    if (kv.first[0] == ':') {
+    if (header_key[0] == ':') {
       continue;
     }
-    headers.setCopy(Http::LowerCaseString(kv.first), kv.second);
+    headers.setCopy(Http::LowerCaseString(header_key), header);
   }
 
   for (auto&& cookie : json_resp.cookies()) {

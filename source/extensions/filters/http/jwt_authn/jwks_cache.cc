@@ -98,11 +98,10 @@ class JwksCacheImpl : public JwksCache {
 public:
   // Load the config from envoy config.
   JwksCacheImpl(const JwtAuthentication& config, TimeSource& time_source, Api::Api& api) {
-    for (const auto& it : config.providers()) {
-      const auto& provider = it.second;
-      jwks_data_map_.emplace(it.first, JwksDataImpl(provider, time_source, api));
+    for (const auto& [provider_name, provider] : config.providers()) {
+      jwks_data_map_.emplace(provider_name, JwksDataImpl(provider, time_source, api));
       if (issuer_ptr_map_.find(provider.issuer()) == issuer_ptr_map_.end()) {
-        issuer_ptr_map_.emplace(provider.issuer(), findByProvider(it.first));
+        issuer_ptr_map_.emplace(provider.issuer(), findByProvider(provider_name));
       }
     }
   }

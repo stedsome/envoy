@@ -75,8 +75,8 @@ Utility::createCanonicalRequest(absl::string_view method, absl::string_view path
   parts.emplace_back(query_part == path_part ? "" : query_part);
   std::vector<std::string> formatted_headers;
   formatted_headers.reserve(canonical_headers.size());
-  for (const auto& header : canonical_headers) {
-    formatted_headers.emplace_back(fmt::format("{}:{}", header.first, header.second));
+  for (const auto& [header_key, header_val] : canonical_headers) {
+    formatted_headers.emplace_back(fmt::format("{}:{}", header_key, header_val));
     parts.emplace_back(formatted_headers.back());
   }
   // need an extra blank space after the canonical headers

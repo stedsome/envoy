@@ -130,9 +130,9 @@ void MySQLFilter::onCommand(Command& command) {
     }
     hsql::TableAccessMap table_access_map;
     result.getStatement(i)->tablesAccessed(table_access_map);
-    for (auto& it : table_access_map) {
-      auto& operations = *fields[it.first].mutable_list_value();
-      for (const auto& ot : it.second) {
+    for (auto& [key, op_set] : table_access_map) {
+      auto& operations = *fields[key].mutable_list_value();
+      for (const auto& ot : op_set) {
         operations.add_values()->set_string_value(ot);
       }
     }

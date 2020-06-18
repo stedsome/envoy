@@ -301,13 +301,13 @@ void DecoderImpl::decodeErrorNotice(MsgParserDict& types) {
     return;
   }
 
-  for (const auto& it : types.keywords_) {
+  for (const auto& [keyword, action] : types.keywords_) {
     // Try to find a keyword with S prefix or V prefix.
     // Postgres versions prior to 9.6 use only S prefix while
     // versions higher than 9.6 use S and V prefixes.
-    if ((message_.find("S" + it.first) != std::string::npos) ||
-        (message_.find("V" + it.first) != std::string::npos)) {
-      it.second(this);
+    if ((message_.find("S" + keyword) != std::string::npos) ||
+        (message_.find("V" + keyword) != std::string::npos)) {
+      action(this);
       return;
     }
   }

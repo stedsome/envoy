@@ -230,8 +230,8 @@ void RawHttpClientImpl::check(RequestCallbacks& callbacks,
     headers = Http::createHeaderMap<Http::RequestHeaderMapImpl>(lengthZeroHeader());
   }
 
-  for (const auto& header : request.attributes().request().http().headers()) {
-    const Http::LowerCaseString key{header.first};
+  for (const auto& [header_key, header_content] : request.attributes().request().http().headers()) {
+    const Http::LowerCaseString key{header_key};
     // Skip setting content-length header since it is already configured at initialization.
     if (key == Http::Headers::get().ContentLength) {
       continue;
@@ -239,9 +239,9 @@ void RawHttpClientImpl::check(RequestCallbacks& callbacks,
 
     if (config_->requestHeaderMatchers()->matches(key.get())) {
       if (key == Http::Headers::get().Path && !config_->pathPrefix().empty()) {
-        headers->addCopy(key, absl::StrCat(config_->pathPrefix(), header.second));
+        headers->addCopy(key, absl::StrCat(config_->pathPrefix(), header_content));
       } else {
-        headers->addCopy(key, header.second);
+        headers->addCopy(key, header_content);
       }
     }
   }

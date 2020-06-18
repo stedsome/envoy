@@ -21,16 +21,16 @@ bool QuicHttpConnectionImplBase::wantsToWrite() { return quic_session_.bytesToSe
 void QuicHttpConnectionImplBase::runWatermarkCallbacksForEachStream(
     quic::QuicSmallMap<quic::QuicStreamId, std::unique_ptr<quic::QuicStream>, 10>& stream_map,
     bool high_watermark) {
-  for (auto& it : stream_map) {
-    if (!it.second->is_static()) {
+  for (auto& [stream_id, stream_ptr] : stream_map) {
+    if (!stream_ptr->is_static()) {
       // Only call watermark callbacks on non QUIC static streams which are
       // crypto stream and Google QUIC headers stream.
-      auto stream = quicStreamToEnvoyStream(it.second.get());
+      auto stream = quicStreamToEnvoyStream(stream_ptr.get());
       if (high_watermark) {
-        ENVOY_LOG(debug, "runHighWatermarkCallbacks on stream {}", it.first);
+        ENVOY_LOG(debug, "runHighWatermarkCallbacks on stream {}", stream_id);
         stream->runHighWatermarkCallbacks();
       } else {
-        ENVOY_LOG(debug, "runLowWatermarkCallbacks on stream {}", it.first);
+        ENVOY_LOG(debug, "runLowWatermarkCallbacks on stream {}", stream_id);
         stream->runLowWatermarkCallbacks();
       }
     }

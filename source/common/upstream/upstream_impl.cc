@@ -1196,11 +1196,12 @@ void PriorityStateManager::initializePriorityFor(
   if (priority_state_.size() <= priority) {
     priority_state_.resize(priority + 1);
   }
-  if (priority_state_[priority].first == nullptr) {
-    priority_state_[priority].first = std::make_unique<HostVector>();
+  auto& [hosts, hosts_weight_map] = priority_state_[priority];
+  if (hosts == nullptr) {
+    hosts = std::make_unique<HostVector>();
   }
   if (locality_lb_endpoint.has_locality() && locality_lb_endpoint.has_load_balancing_weight()) {
-    priority_state_[priority].second[locality_lb_endpoint.locality()] =
+    hosts_weight_map[locality_lb_endpoint.locality()] =
         locality_lb_endpoint.load_balancing_weight().value();
   }
 }
@@ -1223,9 +1224,10 @@ void PriorityStateManager::registerHostForPriority(
     const HostSharedPtr& host,
     const envoy::config::endpoint::v3::LocalityLbEndpoints& locality_lb_endpoint) {
   const uint32_t priority = locality_lb_endpoint.priority();
+  const auto& [hosts, hosts_weight_map] = priority_state_[priority];
   // Should be called after initializePriorityFor.
-  ASSERT(priority_state_[priority].first);
-  priority_state_[priority].first->emplace_back(host);
+  ASSERT(hosts);
+  hosts->emplace_back(host);
 }
 
 void PriorityStateManager::updateClusterPrioritySet(
@@ -1281,11 +1283,11 @@ void PriorityStateManager::updateClusterPrioritySet(
 
   // After the local locality hosts (if any), we place the remaining locality host groups in
   // lexicographic order. This provides a stable ordering for zone aware routing.
-  for (auto& entry : hosts_per_locality) {
-    if (!non_empty_local_locality || !LocalityEqualTo()(local_locality, entry.first)) {
-      per_locality.emplace_back(entry.second);
+  for (auto& [host_locality, hosts] : hosts_per_locality) {
+    if (!non_empty_local_locality || !LocalityEqualTo()(local_locality, host_locality)) {
+      per_locality.emplace_back(hosts);
       if (locality_weighted_lb) {
-        locality_weights->emplace_back(locality_weights_map[entry.first]);
+        locality_weights->emplace_back(locality_weights_map[host_locality]);
       }
     }
   }

@@ -14,15 +14,15 @@ RoleBasedAccessControlEngineImpl::RoleBasedAccessControlEngineImpl(
     const envoy::config::rbac::v3::RBAC& rules)
     : allowed_if_matched_(rules.action() == envoy::config::rbac::v3::RBAC::ALLOW) {
   // guard expression builder by presence of a condition in policies
-  for (const auto& policy : rules.policies()) {
-    if (policy.second.has_condition()) {
+  for (const auto& [policy_id, policy_matcher] : rules.policies()) {
+    if (policy_matcher.has_condition()) {
       builder_ = Expr::createBuilder(&constant_arena_);
       break;
     }
   }
 
-  for (const auto& policy : rules.policies()) {
-    policies_.emplace(policy.first, std::make_unique<PolicyMatcher>(policy.second, builder_.get()));
+  for (const auto& [policy_id, policy_matcher] : rules.policies()) {
+    policies_.emplace(policy_id, std::make_unique<PolicyMatcher>(policy_matcher, builder_.get()));
   }
 }
 
@@ -32,11 +32,11 @@ bool RoleBasedAccessControlEngineImpl::allowed(const Network::Connection& connec
                                                std::string* effective_policy_id) const {
   bool matched = false;
 
-  for (const auto& policy : policies_) {
-    if (policy.second->matches(connection, headers, info)) {
+  for (const auto& [policy_id, policy_matcher] : policies_) {
+    if (policy_matcher->matches(connection, headers, info)) {
       matched = true;
       if (effective_policy_id != nullptr) {
-        *effective_policy_id = policy.first;
+        *effective_policy_id = policy_id;
       }
       break;
     }

@@ -74,10 +74,10 @@ DnsCacheImpl::loadDnsCacheEntry(absl::string_view host, uint16_t default_port,
 
 absl::flat_hash_map<std::string, DnsHostInfoSharedPtr> DnsCacheImpl::hosts() {
   absl::flat_hash_map<std::string, DnsHostInfoSharedPtr> ret;
-  for (const auto& host : primary_hosts_) {
+  for (const auto& [primary_host_key, primary_host_ptr] : primary_hosts_) {
     // Only include hosts that have ever resolved to an address.
-    if (host.second->host_info_->address_ != nullptr) {
-      ret.emplace(host.first, host.second->host_info_);
+    if (primary_host_ptr->host_info_->address_ != nullptr) {
+      ret.emplace(primary_host_key, primary_host_ptr->host_info_);
     }
   }
   return ret;
@@ -230,10 +230,10 @@ void DnsCacheImpl::runRemoveCallbacks(const std::string& host) {
 
 void DnsCacheImpl::updateTlsHostsMap() {
   TlsHostMapSharedPtr new_host_map = std::make_shared<TlsHostMap>();
-  for (const auto& primary_host : primary_hosts_) {
+  for (const auto& [primary_host_key, primary_host_ptr] : primary_hosts_) {
     // Do not include hosts that have not resolved at least once.
-    if (primary_host.second->host_info_->first_resolve_complete_) {
-      new_host_map->emplace(primary_host.first, primary_host.second->host_info_);
+    if (primary_host_ptr->host_info_->first_resolve_complete_) {
+      new_host_map->emplace(primary_host_key, primary_host_ptr->host_info_);
     }
   }
 

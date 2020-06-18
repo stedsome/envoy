@@ -147,19 +147,21 @@ bool DubboProtocolImpl::decodeData(Buffer::Instance& buffer, ContextSharedPtr co
   switch (metadata->message_type()) {
   case MessageType::Oneway:
   case MessageType::Request: {
-    auto ret = serializer_->deserializeRpcInvocation(buffer, context);
-    if (!ret.second) {
+    auto [deserialize_info, deserailize_status] =
+        serializer_->deserializeRpcInvocation(buffer, context);
+    if (!deserailize_status) {
       return false;
     }
-    metadata->setInvocationInfo(ret.first);
+    metadata->setInvocationInfo(deserialize_info);
     break;
   }
   case MessageType::Response: {
-    auto ret = serializer_->deserializeRpcResult(buffer, context);
-    if (!ret.second) {
+    auto [deserialize_info, deserailize_status] =
+        serializer_->deserializeRpcResult(buffer, context);
+    if (!deserailize_status) {
       return false;
     }
-    if (ret.first->hasException()) {
+    if (deserialize_info->hasException()) {
       metadata->setMessageType(MessageType::Exception);
     }
     break;
