@@ -55,9 +55,9 @@ void HystrixSink::addHistogramToStream(const QuantileLatencyMap& latency_map, ab
   // TODO: Consider if we better use join here
   ss << ", \"" << key << "\": {";
   bool is_first = true;
-  for (const auto& element : latency_map) {
-    const std::string quantile = fmt::sprintf("%g", element.first * 100);
-    HystrixSink::addDoubleToStream(quantile, element.second, ss, is_first);
+  for (const auto& [latency_key, latency_val] : latency_map) {
+    const std::string quantile = fmt::sprintf("%g", latency_key * 100);
+    HystrixSink::addDoubleToStream(quantile, latency_val, ss, is_first);
     is_first = false;
   }
   ss << "}";
@@ -346,10 +346,11 @@ void HystrixSink::flush(Stats::MetricSnapshot& snapshot) {
       // Make sure we found the cluster name tag
       ASSERT(value);
       std::string value_str = server_.stats().symbolTable().toString(*value);
-      auto it_bool_pair = time_histograms.emplace(std::make_pair(value_str, QuantileLatencyMap()));
+      auto [emplace_it, emplace_status] =
+          time_histograms.emplace(std::make_pair(value_str, QuantileLatencyMap()));
       // Make sure histogram with this name was not already added
-      ASSERT(it_bool_pair.second);
-      QuantileLatencyMap& hist_map = it_bool_pair.first->second;
+      ASSERT(emplace_status);
+      QuantileLatencyMap& hist_map = emplace_it->second;
 
       const std::vector<double>& supported_quantiles =
           histogram.get().intervalStatistics().supportedQuantiles();

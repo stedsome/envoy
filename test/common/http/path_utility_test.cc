@@ -60,12 +60,11 @@ TEST_F(PathUtilityTest, NormalizeValidPaths) {
       {"/a/b/%2E%2E/c", "/a/c"}     // %2E escape
   };
 
-  for (const auto& path_pair : non_normal_pairs) {
-    auto& path_header = pathHeaderEntry(path_pair.first);
+  for (const auto& [non_normal_path, normal_path] : non_normal_pairs) {
+    auto& path_header = pathHeaderEntry(non_normal_path);
     const auto result = PathUtil::canonicalPath(headers_);
-    EXPECT_TRUE(result) << "original path: " << path_pair.first;
-    EXPECT_EQ(path_header.value().getStringView(), path_pair.second)
-        << "original path: " << path_pair.second;
+    EXPECT_TRUE(result) << "original path: " << non_normal_path;
+    EXPECT_EQ(path_header.value().getStringView(), normal_path) << "original path: " << normal_path;
   }
 }
 
@@ -78,12 +77,11 @@ TEST_F(PathUtilityTest, NormalizeCasePath) {
       {"/a/%2F%2f/c", "/a/%2F%2f/c"}, // %2F is not normalized to %2f
   };
 
-  for (const auto& path_pair : non_normal_pairs) {
-    auto& path_header = pathHeaderEntry(path_pair.first);
+  for (const auto& [non_normal_path, normal_path] : non_normal_pairs) {
+    auto& path_header = pathHeaderEntry(non_normal_path);
     const auto result = PathUtil::canonicalPath(headers_);
-    EXPECT_TRUE(result) << "original path: " << path_pair.first;
-    EXPECT_EQ(path_header.value().getStringView(), path_pair.second)
-        << "original path: " << path_pair.second;
+    EXPECT_TRUE(result) << "original path: " << non_normal_path;
+    EXPECT_EQ(path_header.value().getStringView(), normal_path) << "original path: " << normal_path;
   }
 }
 // These test cases are explicitly not covered above:

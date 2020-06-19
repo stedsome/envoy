@@ -71,10 +71,10 @@ protected:
 Protobuf::RepeatedPtrField<envoy::service::discovery::v3::Resource>
 populateRepeatedResource(std::vector<std::pair<std::string, std::string>> items) {
   Protobuf::RepeatedPtrField<envoy::service::discovery::v3::Resource> add_to;
-  for (const auto& item : items) {
+  for (const auto& [item_name, item_version] : items) {
     auto* resource = add_to.Add();
-    resource->set_name(item.first);
-    resource->set_version(item.second);
+    resource->set_name(item_name);
+    resource->set_version(item_version);
   }
   return add_to;
 }

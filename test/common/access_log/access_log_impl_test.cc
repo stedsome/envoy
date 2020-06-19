@@ -1166,11 +1166,11 @@ typed_config:
       {"PERMISSION_DENIED", 403}, {"UNAVAILABLE", 429}, {"UNIMPLEMENTED", 404},
       {"UNAVAILABLE", 502},       {"UNAVAILABLE", 503}, {"UNAVAILABLE", 504}};
 
-  for (const auto& pair : statusMapping) {
-    stream_info_.response_code_ = pair.second;
+  for (const auto& [status, status_code] : statusMapping) {
+    stream_info_.response_code_ = status_code;
 
     const InstanceSharedPtr log = AccessLogFactory::fromProto(
-        parseAccessLogFromV2Yaml(fmt::format(yaml_template, pair.first)), context_);
+        parseAccessLogFromV2Yaml(fmt::format(yaml_template, status)), context_);
 
     EXPECT_CALL(*file_, write(_));
     log->log(&request_headers_, &response_headers_, &response_trailers_, stream_info_);

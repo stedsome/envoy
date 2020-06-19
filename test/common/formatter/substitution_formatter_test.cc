@@ -1468,8 +1468,8 @@ void verifyJsonOutput(std::string json_string,
   EXPECT_NE(newline_pos, std::string::npos);
   EXPECT_EQ(newline_pos, json_string.length() - 1);
 
-  for (const auto& pair : expected_map) {
-    EXPECT_EQ(parsed->getString(pair.first), pair.second);
+  for (const auto& [parse_key, parse_result] : expected_map) {
+    EXPECT_EQ(parsed->getString(parse_key), parse_result);
   }
 }
 
@@ -1832,8 +1832,8 @@ TEST(SubstitutionFormatterTest, JsonFormatterMultiTokenTest) {
 
       const auto parsed = Json::Factory::loadFromString(
           formatter.format(request_header, response_header, response_trailer, stream_info, body));
-      for (const auto& pair : expected_json_map) {
-        EXPECT_EQ(parsed->getString(pair.first), pair.second);
+      for (const auto& [parse_key, parse_result] : expected_json_map) {
+        EXPECT_EQ(parsed->getString(parse_key), parse_result);
       }
     }
   }

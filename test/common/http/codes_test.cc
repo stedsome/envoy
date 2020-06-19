@@ -203,8 +203,8 @@ TEST_F(CodeUtilityTest, All) {
       std::make_pair(Code::NetworkAuthenticationRequired, "Network Authentication Required"),
       std::make_pair(static_cast<Code>(600), "Unknown")};
 
-  for (const auto& test_case : test_set) {
-    EXPECT_EQ(test_case.second, CodeUtility::toString(test_case.first));
+  for (const auto& [test_case_code, test_case_satus] : test_set) {
+    EXPECT_EQ(test_case_satus, CodeUtility::toString(test_case_code));
   }
 
   EXPECT_EQ(std::string("Unknown"), CodeUtility::toString(static_cast<Code>(600)));
