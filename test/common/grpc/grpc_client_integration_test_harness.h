@@ -113,8 +113,8 @@ public:
     EXPECT_CALL(*this, onReceiveInitialMetadata_(_))
         .WillOnce(Invoke([this, &metadata](const Http::HeaderMap& received_headers) {
           Http::TestResponseHeaderMapImpl stream_headers(received_headers);
-          for (const auto& value : metadata) {
-            EXPECT_EQ(value.second, stream_headers.get_(value.first));
+          for (const auto& [key, value] : metadata) {
+            EXPECT_EQ(value, stream_headers.get_(key));
           }
           dispatcher_helper_.exitDispatcherIfNeeded();
         }));
@@ -125,8 +125,8 @@ public:
     EXPECT_CALL(*this, onReceiveTrailingMetadata_(_))
         .WillOnce(Invoke([this, &metadata](const Http::HeaderMap& received_headers) {
           Http::TestResponseTrailerMapImpl stream_headers(received_headers);
-          for (auto& value : metadata) {
-            EXPECT_EQ(value.second, stream_headers.get_(value.first));
+          for (auto& [key, value] : metadata) {
+            EXPECT_EQ(value, stream_headers.get_(key));
           }
           dispatcher_helper_.exitDispatcherIfNeeded();
         }));
@@ -135,8 +135,8 @@ public:
 
   void sendServerInitialMetadata(const TestMetadata& metadata) {
     Http::HeaderMapPtr reply_headers{new Http::TestResponseHeaderMapImpl{{":status", "200"}}};
-    for (auto& value : metadata) {
-      reply_headers->addReference(value.first, value.second);
+    for (auto& [key, value] : metadata) {
+      reply_headers->addReference(key, value);
     }
     expectInitialMetadata(metadata);
     fake_stream_->encodeHeaders(Http::TestResponseHeaderMapImpl(*reply_headers), false);
@@ -172,8 +172,8 @@ public:
     if (trailers_only) {
       reply_trailers.addCopy(":status", "200");
     }
-    for (const auto& value : metadata) {
-      reply_trailers.addCopy(value.first, value.second);
+    for (const auto& [key, value] : metadata) {
+      reply_trailers.addCopy(key, value);
     }
     if (trailers_only) {
       expectInitialMetadata(empty_metadata_);
@@ -264,10 +264,10 @@ public:
   }
 
   void fillServiceWideInitialMetadata(envoy::config::core::v3::GrpcService& config) {
-    for (const auto& item : service_wide_initial_metadata_) {
+    for (const auto& [item_key, item_value] : service_wide_initial_metadata_) {
       auto* header_value = config.add_initial_metadata();
-      header_value->set_key(item.first.get());
-      header_value->set_value(item.second);
+      header_value->set_key(item_key.get());
+      header_value->set_value(item_value);
     }
   }
 
@@ -308,9 +308,9 @@ public:
     auto* google_grpc = config.mutable_google_grpc();
     google_grpc->set_target_uri(fake_upstream_->localAddress()->asString());
     google_grpc->set_stat_prefix("fake_cluster");
-    for (const auto& config_arg : channel_args_) {
-      (*google_grpc->mutable_channel_args()->mutable_args())[config_arg.first].set_string_value(
-          config_arg.second);
+    for (const auto& [config_arg_key, config_arg_val] : channel_args_) {
+      (*google_grpc->mutable_channel_args()->mutable_args())[config_arg_key].set_string_value(
+          config_arg_val);
     }
     fillServiceWideInitialMetadata(config);
     return config;
@@ -336,11 +336,11 @@ public:
     EXPECT_EQ("/helloworld.Greeter/SayHello", stream_headers_->get_(":path"));
     EXPECT_EQ("application/grpc", stream_headers_->get_("content-type"));
     EXPECT_EQ("trailers", stream_headers_->get_("te"));
-    for (const auto& value : initial_metadata) {
-      EXPECT_EQ(value.second, stream_headers_->get_(value.first));
+    for (const auto& [key, expected_header] : initial_metadata) {
+      EXPECT_EQ(expected_header, stream_headers_->get_(key));
     }
-    for (const auto& value : service_wide_initial_metadata_) {
-      EXPECT_EQ(value.second, stream_headers_->get_(value.first));
+    for (const auto& [key, expected_header] : service_wide_initial_metadata_) {
+      EXPECT_EQ(expected_header, stream_headers_->get_(key));
     }
   }
 
@@ -350,8 +350,8 @@ public:
     auto request = std::make_unique<HelloworldRequest>(dispatcher_helper_);
     EXPECT_CALL(*request, onCreateInitialMetadata(_))
         .WillOnce(Invoke([&initial_metadata](Http::HeaderMap& headers) {
-          for (const auto& value : initial_metadata) {
-            headers.addReference(value.first, value.second);
+          for (const auto& [key, value] : initial_metadata) {
+            headers.addReference(key, value);
           }
         }));
     helloworld::HelloRequest request_msg;
@@ -396,8 +396,8 @@ public:
     auto stream = std::make_unique<HelloworldStream>(dispatcher_helper_);
     EXPECT_CALL(*stream, onCreateInitialMetadata(_))
         .WillOnce(Invoke([&initial_metadata](Http::HeaderMap& headers) {
-          for (const auto& value : initial_metadata) {
-            headers.addReference(value.first, value.second);
+          for (const auto& [key, value] : initial_metadata) {
+            headers.addReference(key, value);
           }
         }));
 

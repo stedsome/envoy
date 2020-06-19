@@ -48,9 +48,9 @@ protected:
   }
 
   void addSymlinks(std::list<std::pair<std::string, std::string>> symlinks) {
-    for (const auto& link : symlinks) {
-      const std::string target_path = dir_path_ + "/" + link.first;
-      const std::string link_path = dir_path_ + "/" + link.second;
+    for (const auto& [target_addr, link_addr] : symlinks) {
+      const std::string target_path = dir_path_ + "/" + target_addr;
+      const std::string link_path = dir_path_ + "/" + link_addr;
       TestEnvironment::createSymlink(target_path, link_path);
       files_to_remove_.push(link_path);
     }

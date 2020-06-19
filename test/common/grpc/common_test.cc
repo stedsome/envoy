@@ -244,8 +244,8 @@ TEST(GrpcContextTest, GrpcToHttpStatus) {
       {Status::WellKnownGrpcStatus::Unauthenticated, 401},
       {Status::WellKnownGrpcStatus::InvalidCode, 500},
   };
-  for (const auto& test_case : test_set) {
-    EXPECT_EQ(test_case.second, Grpc::Utility::grpcToHttpStatus(test_case.first));
+  for (const auto& [test_case_status, test_case_status_code] : test_set) {
+    EXPECT_EQ(test_case_status_code, Grpc::Utility::grpcToHttpStatus(test_case_status));
   }
 }
 
@@ -261,8 +261,8 @@ TEST(GrpcContextTest, HttpToGrpcStatus) {
       {504, Status::WellKnownGrpcStatus::Unavailable},
       {500, Status::WellKnownGrpcStatus::Unknown},
   };
-  for (const auto& test_case : test_set) {
-    EXPECT_EQ(test_case.second, Grpc::Utility::httpToGrpcStatus(test_case.first));
+  for (const auto& [test_case_status_code, test_case_status] : test_set) {
+    EXPECT_EQ(test_case_status, Grpc::Utility::httpToGrpcStatus(test_case_status_code));
   }
 }
 

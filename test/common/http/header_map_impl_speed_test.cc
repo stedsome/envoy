@@ -212,8 +212,8 @@ static void HeaderMapImplPopulate(benchmark::State& state) {
   };
   for (auto _ : state) {
     HeaderMapImpl headers;
-    for (const auto& key_value : headers_to_add) {
-      headers.addReference(key_value.first, key_value.second);
+    for (const auto& [header_key, header_value] : headers_to_add) {
+      headers.addReference(header_key, header_value);
     }
     benchmark::DoNotOptimize(headers.size());
   }

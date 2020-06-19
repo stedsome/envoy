@@ -294,8 +294,10 @@ void InstanceImpl::initialize(const Options& options,
             options.restartEpoch(), restarter_.baseId(), restarter_.version());
 
   ENVOY_LOG(info, "statically linked extensions:");
-  for (const auto& ext : Envoy::Registry::FactoryCategoryRegistry::registeredFactories()) {
-    ENVOY_LOG(info, "  {}: {}", ext.first, absl::StrJoin(ext.second->registeredNames(), ", "));
+  for (const auto& [factory_category, factory_names] :
+       Envoy::Registry::FactoryCategoryRegistry::registeredFactories()) {
+    ENVOY_LOG(info, "  {}: {}", factory_category,
+              absl::StrJoin(factory_names->registeredNames(), ", "));
   }
 
   // Handle configuration that needs to take place prior to the main configuration load.
@@ -350,16 +352,17 @@ void InstanceImpl::initialize(const Options& options,
   bootstrap_.mutable_node()->set_hidden_envoy_deprecated_build_version(VersionInfo::version());
   bootstrap_.mutable_node()->set_user_agent_name("envoy");
   *bootstrap_.mutable_node()->mutable_user_agent_build_version() = VersionInfo::buildVersion();
-  for (const auto& ext : Envoy::Registry::FactoryCategoryRegistry::registeredFactories()) {
-    for (const auto& name : ext.second->allRegisteredNames()) {
+  for (const auto& [factory_category, factory_names] :
+       Envoy::Registry::FactoryCategoryRegistry::registeredFactories()) {
+    for (const auto& name : factory_names->allRegisteredNames()) {
       auto* extension = bootstrap_.mutable_node()->add_extensions();
       extension->set_name(std::string(name));
-      extension->set_category(ext.first);
-      auto const version = ext.second->getFactoryVersion(name);
+      extension->set_category(factory_category);
+      auto const version = factory_names->getFactoryVersion(name);
       if (version) {
         *extension->mutable_version() = version.value();
       }
-      extension->set_disabled(ext.second->isFactoryDisabled(name));
+      extension->set_disabled(factory_names->isFactoryDisabled(name));
     }
   }
 

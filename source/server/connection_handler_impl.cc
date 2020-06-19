@@ -196,8 +196,10 @@ ConnectionHandlerImpl::findActiveTcpListenerByAddress(const Network::Address::In
       listeners_.begin(), listeners_.end(),
       [&address](
           const std::pair<Network::Address::InstanceConstSharedPtr, ActiveListenerDetails>& p) {
-        return p.second.tcp_listener_.has_value() && p.second.listener_->listener() != nullptr &&
-               p.first->type() == Network::Address::Type::Ip && *(p.first) == address;
+        auto& [instance, active_listener] = p;
+        return active_listener.tcp_listener_.has_value() &&
+               active_listener.listener_->listener() != nullptr &&
+               instance->type() == Network::Address::Type::Ip && *(instance) == address;
       });
 
   // If there is exact address match, return the corresponding listener.
@@ -212,9 +214,11 @@ ConnectionHandlerImpl::findActiveTcpListenerByAddress(const Network::Address::In
       listeners_.begin(), listeners_.end(),
       [&address](
           const std::pair<Network::Address::InstanceConstSharedPtr, ActiveListenerDetails>& p) {
-        return p.second.tcp_listener_.has_value() && p.second.listener_->listener() != nullptr &&
-               p.first->type() == Network::Address::Type::Ip &&
-               p.first->ip()->port() == address.ip()->port() && p.first->ip()->isAnyAddress();
+        auto& [instance, active_listener] = p;
+        return active_listener.tcp_listener_.has_value() &&
+               active_listener.listener_->listener() != nullptr &&
+               instance->type() == Network::Address::Type::Ip &&
+               instance->ip()->port() == address.ip()->port() && instance->ip()->isAnyAddress();
       });
   return (listener_it != listeners_.end()) ? listener_it->second.tcp_listener_ : absl::nullopt;
 }

@@ -488,32 +488,33 @@ const Network::FilterChain* FilterChainManagerImpl::findFilterChainForApplicatio
 const Network::FilterChain* FilterChainManagerImpl::findFilterChainForSourceTypes(
     const SourceTypesArray& source_types, const Network::ConnectionSocket& socket) const {
 
-  const auto& filter_chain_local =
+  const auto& [filter_chain_local_map, filter_chain_local_trie] =
       source_types[envoy::config::listener::v3::FilterChainMatch::SAME_IP_OR_LOOPBACK];
 
-  const auto& filter_chain_external =
+  const auto& [filter_chain_external_map, filter_chain_external_trie] =
       source_types[envoy::config::listener::v3::FilterChainMatch::EXTERNAL];
 
   // isSameIpOrLoopback can be expensive. Call it only if LOCAL or EXTERNAL have entries.
   const bool is_local_connection =
-      (!filter_chain_local.first.empty() || !filter_chain_external.first.empty())
+      (!filter_chain_local_map.empty() || !filter_chain_external_map.empty())
           ? Network::Utility::isSameIpOrLoopback(socket)
           : false;
 
   if (is_local_connection) {
-    if (!filter_chain_local.first.empty()) {
-      return findFilterChainForSourceIpAndPort(*filter_chain_local.second, socket);
+    if (!filter_chain_local_map.empty()) {
+      return findFilterChainForSourceIpAndPort(*filter_chain_local_trie, socket);
     }
   } else {
-    if (!filter_chain_external.first.empty()) {
-      return findFilterChainForSourceIpAndPort(*filter_chain_external.second, socket);
+    if (!filter_chain_external_map.empty()) {
+      return findFilterChainForSourceIpAndPort(*filter_chain_external_trie, socket);
     }
   }
 
-  const auto& filter_chain_any = source_types[envoy::config::listener::v3::FilterChainMatch::ANY];
+  const auto& [filter_chain_any_map, filter_chain_any_trie] =
+      source_types[envoy::config::listener::v3::FilterChainMatch::ANY];
 
-  if (!filter_chain_any.first.empty()) {
-    return findFilterChainForSourceIpAndPort(*filter_chain_any.second, socket);
+  if (!filter_chain_any_map.empty()) {
+    return findFilterChainForSourceIpAndPort(*filter_chain_any_trie, socket);
   } else {
     return nullptr;
   }
@@ -562,27 +563,26 @@ void FilterChainManagerImpl::convertIPsToTries() {
         destination_ips_list;
     destination_ips_list.reserve(destination_ips_map.size());
 
-    for (const auto& entry : destination_ips_map) {
-      destination_ips_list.push_back(makeCidrListEntry(entry.first, entry.second));
+    for (const auto& [destination_ip_key, server_name_map] : destination_ips_map) {
+      destination_ips_list.push_back(makeCidrListEntry(destination_ip_key, server_name_map));
 
       // This hugely nested for loop greatly pains me, but I'm not sure how to make it better.
       // We need to get access to all of the source IP strings so that we can convert them into
       // a trie like we did for the destination IPs above.
-      for (auto& server_names_entry : *entry.second) {
-        for (auto& transport_protocols_entry : server_names_entry.second) {
-          for (auto& application_protocols_entry : transport_protocols_entry.second) {
-            for (auto& source_array_entry : application_protocols_entry.second) {
-              auto& source_ips_map = source_array_entry.first;
+      for (auto& [server_name_key, transport_protocols] : *server_name_map) {
+        for (auto& [transport_protocol_key, application_protocols] : transport_protocols) {
+          for (auto& [application_protocol_key, application_protocol] : application_protocols) {
+            for (auto& [source_ips_map, source_ips_trie] : application_protocol) {
               std::vector<
                   std::pair<SourcePortsMapSharedPtr, std::vector<Network::Address::CidrRange>>>
                   source_ips_list;
               source_ips_list.reserve(source_ips_map.size());
 
-              for (auto& source_ip : source_ips_map) {
-                source_ips_list.push_back(makeCidrListEntry(source_ip.first, source_ip.second));
+              for (auto& [source_ip_key, source_ip_val] : source_ips_map) {
+                source_ips_list.push_back(makeCidrListEntry(source_ip_key, source_ip_val));
               }
 
-              source_array_entry.second = std::make_unique<SourceIPsTrie>(source_ips_list, true);
+              source_ips_trie = std::make_unique<SourceIPsTrie>(source_ips_list, true);
             }
           }
         }

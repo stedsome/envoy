@@ -104,8 +104,8 @@ public:
     }
     expected_request.set_type_url(Config::TypeUrl::get().ClusterLoadAssignment);
 
-    for (auto const& resource : initial_resource_versions) {
-      (*expected_request.mutable_initial_resource_versions())[resource.first] = resource.second;
+    for (auto const& [resource_name, resource_version] : initial_resource_versions) {
+      (*expected_request.mutable_initial_resource_versions())[resource_name] = resource_version;
     }
 
     if (error_code != Grpc::Status::WellKnownGrpcStatus::Ok) {

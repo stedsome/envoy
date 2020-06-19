@@ -114,12 +114,12 @@ Http::Code StatsHandler::handlerStats(absl::string_view url,
       rc = Http::Code::NotFound;
     }
   } else { // Display plain stats if format query param is not there.
-    for (const auto& text_readout : text_readouts) {
-      response.add(fmt::format("{}: \"{}\"\n", text_readout.first,
-                               Html::Utility::sanitize(text_readout.second)));
+    for (const auto& [text_readout_name, text_readout_value] : text_readouts) {
+      response.add(fmt::format("{}: \"{}\"\n", text_readout_name,
+                               Html::Utility::sanitize(text_readout_value)));
     }
-    for (const auto& stat : all_stats) {
-      response.add(fmt::format("{}: {}\n", stat.first, stat.second));
+    for (const auto& [stat_key, stat_value] : all_stats) {
+      response.add(fmt::format("{}: {}\n", stat_key, stat_value));
     }
     // TODO(ramaraochavali): See the comment in ThreadLocalStoreImpl::histograms() for why we use a
     // multimap here. This makes sure that duplicate histograms get output. When shared storage is
@@ -130,8 +130,8 @@ Http::Code StatsHandler::handlerStats(absl::string_view url,
         all_histograms.emplace(histogram->name(), histogram->quantileSummary());
       }
     }
-    for (const auto& histogram : all_histograms) {
-      response.add(fmt::format("{}: {}\n", histogram.first, histogram.second));
+    for (const auto& [histogram_name, quantile_summary] : all_histograms) {
+      response.add(fmt::format("{}: {}\n", histogram_name, quantile_summary));
     }
   }
   return rc;
@@ -181,18 +181,18 @@ StatsHandler::statsAsJson(const std::map<std::string, uint64_t>& all_stats,
 
   ProtobufWkt::Struct document;
   std::vector<ProtobufWkt::Value> stats_array;
-  for (const auto& text_readout : text_readouts) {
+  for (const auto& [text_readout_name, text_readout_value] : text_readouts) {
     ProtobufWkt::Struct stat_obj;
     auto* stat_obj_fields = stat_obj.mutable_fields();
-    (*stat_obj_fields)["name"] = ValueUtil::stringValue(text_readout.first);
-    (*stat_obj_fields)["value"] = ValueUtil::stringValue(text_readout.second);
+    (*stat_obj_fields)["name"] = ValueUtil::stringValue(text_readout_name);
+    (*stat_obj_fields)["value"] = ValueUtil::stringValue(text_readout_value);
     stats_array.push_back(ValueUtil::structValue(stat_obj));
   }
-  for (const auto& stat : all_stats) {
+  for (const auto& [stat_key, stat_value] : all_stats) {
     ProtobufWkt::Struct stat_obj;
     auto* stat_obj_fields = stat_obj.mutable_fields();
-    (*stat_obj_fields)["name"] = ValueUtil::stringValue(stat.first);
-    (*stat_obj_fields)["value"] = ValueUtil::numberValue(stat.second);
+    (*stat_obj_fields)["name"] = ValueUtil::stringValue(stat_key);
+    (*stat_obj_fields)["value"] = ValueUtil::numberValue(stat_value);
     stats_array.push_back(ValueUtil::structValue(stat_obj));
   }
 
