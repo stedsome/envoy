@@ -79,17 +79,17 @@ void Span::finishSpan() {
   s.set_parent_id(parentId());
 
   auto* request_fields = s.mutable_http()->mutable_request()->mutable_fields();
-  for (const auto& field : http_request_annotations_) {
-    request_fields->insert({field.first, field.second});
+  for (const auto& [field_key, field_value] : http_request_annotations_) {
+    request_fields->insert({field_key, field_value});
   }
 
   auto* response_fields = s.mutable_http()->mutable_response()->mutable_fields();
-  for (const auto& field : http_response_annotations_) {
-    response_fields->insert({field.first, field.second});
+  for (const auto& [field_key, field_value] : http_response_annotations_) {
+    response_fields->insert({field_key, field_value});
   }
 
-  for (const auto& item : custom_annotations_) {
-    s.mutable_annotations()->insert({item.first, item.second});
+  for (const auto& [annotation_key, annotation_value] : custom_annotations_) {
+    s.mutable_annotations()->insert({annotation_key, annotation_value});
   }
 
   const std::string json = MessageUtil::getJsonStringFromMessage(

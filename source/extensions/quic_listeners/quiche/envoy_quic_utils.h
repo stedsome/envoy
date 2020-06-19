@@ -39,9 +39,9 @@ quic::QuicSocketAddress envoyAddressInstanceToQuicSocketAddress(
 template <class T>
 std::unique_ptr<T> quicHeadersToEnvoyHeaders(const quic::QuicHeaderList& header_list) {
   auto headers = T::create();
-  for (const auto& entry : header_list) {
+  for (const auto& [entry_key, entry_val] : header_list) {
     // TODO(danzh): Avoid copy by referencing entry as header_list is already validated by QUIC.
-    headers->addCopy(Http::LowerCaseString(entry.first), entry.second);
+    headers->addCopy(Http::LowerCaseString(entry_key), entry_val);
   }
   return headers;
 }
@@ -49,10 +49,10 @@ std::unique_ptr<T> quicHeadersToEnvoyHeaders(const quic::QuicHeaderList& header_
 template <class T>
 std::unique_ptr<T> spdyHeaderBlockToEnvoyHeaders(const spdy::SpdyHeaderBlock& header_block) {
   auto headers = T::create();
-  for (auto entry : header_block) {
+  for (auto [entry_key, entry_val] : header_block) {
     // TODO(danzh): Avoid temporary strings and addCopy() with std::string_view.
-    std::string key(entry.first);
-    std::string value(entry.second);
+    std::string key(entry_key);
+    std::string value(entry_val);
     headers->addCopy(Http::LowerCaseString(key), value);
   }
   return headers;

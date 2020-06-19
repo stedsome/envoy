@@ -112,17 +112,17 @@ uint64_t outputStatType(
     groups[metric->tagExtractedStatName()].push_back(metric.get());
   }
 
-  for (auto& group : groups) {
+  for (auto& [group_name, group_collection] : groups) {
     const std::string prefixed_tag_extracted_name =
-        PrometheusStatsFormatter::metricName(global_symbol_table.toString(group.first));
+        PrometheusStatsFormatter::metricName(global_symbol_table.toString(group_name));
     response.add(fmt::format("# TYPE {0} {1}\n", prefixed_tag_extracted_name, type));
 
     // Sort before producing the final output to satisfy the "preferred" ordering from the
     // prometheus spec: metrics will be sorted by their tags' textual representation, which will
     // be consistent across calls.
-    std::sort(group.second.begin(), group.second.end(), MetricLessThan());
+    std::sort(group_collection.begin(), group_collection.end(), MetricLessThan());
 
-    for (const auto& metric : group.second) {
+    for (const auto& metric : group_collection) {
       response.add(generate_output(*metric, prefixed_tag_extracted_name));
     }
     response.add("\n");

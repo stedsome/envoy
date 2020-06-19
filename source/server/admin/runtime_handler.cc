@@ -29,30 +29,30 @@ Http::Code RuntimeHandler::handlerRuntime(absl::string_view url,
   std::map<std::string, std::vector<std::string>> entries;
   for (const auto& layer : layers) {
     layer_names.push_back(ValueUtil::stringValue(layer->name()));
-    for (const auto& value : layer->values()) {
-      const auto found = entries.find(value.first);
+    for (const auto& [value_name, value] : layer->values()) {
+      const auto found = entries.find(value_name);
       if (found == entries.end()) {
-        entries.emplace(value.first, std::vector<std::string>{});
+        entries.emplace(value_name, std::vector<std::string>{});
       }
     }
   }
 
   for (const auto& layer : layers) {
-    for (auto& entry : entries) {
-      const auto found = layer->values().find(entry.first);
+    for (auto& [entry_name, entry_vector] : entries) {
+      const auto found = layer->values().find(entry_name);
       const auto& entry_value =
           found == layer->values().end() ? EMPTY_STRING : found->second.raw_string_value_;
-      entry.second.push_back(entry_value);
+      entry_vector.push_back(entry_value);
     }
   }
 
   ProtobufWkt::Struct layer_entries;
   auto* layer_entry_fields = layer_entries.mutable_fields();
-  for (const auto& entry : entries) {
+  for (const auto& [entry_name, entry_vector] : entries) {
     std::vector<ProtobufWkt::Value> layer_entry_values;
-    layer_entry_values.reserve(entry.second.size());
+    layer_entry_values.reserve(entry_vector.size());
     std::string final_value;
-    for (const auto& value : entry.second) {
+    for (const auto& value : entry_vector) {
       if (!value.empty()) {
         final_value = value;
       }
@@ -64,7 +64,7 @@ Http::Code RuntimeHandler::handlerRuntime(absl::string_view url,
 
     (*layer_entry_value_fields)["final_value"] = ValueUtil::stringValue(final_value);
     (*layer_entry_value_fields)["layer_values"] = ValueUtil::listValue(layer_entry_values);
-    (*layer_entry_fields)[entry.first] = ValueUtil::structValue(layer_entry_value);
+    (*layer_entry_fields)[entry_name] = ValueUtil::structValue(layer_entry_value);
   }
 
   ProtobufWkt::Struct runtime;

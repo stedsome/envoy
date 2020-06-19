@@ -52,10 +52,10 @@ TEST_F(HeaderUtilityTest, RemovePortsFromHost) {
       {"[fc00::1]:80", "[fc00::1]:80"}      // port not matching w/ ipv6
   };
 
-  for (const auto& host_pair : host_headers) {
-    auto& host_header = hostHeaderEntry(host_pair.first);
+  for (const auto& [host_header_name, host_header_value] : host_headers) {
+    auto& host_header = hostHeaderEntry(host_header_name);
     HeaderUtility::stripPortFromHost(headers_, 443);
-    EXPECT_EQ(host_header.value().getStringView(), host_pair.second);
+    EXPECT_EQ(host_header.value().getStringView(), host_header_value);
   }
 }
 
@@ -64,10 +64,10 @@ TEST_F(HeaderUtilityTest, RemovePortsFromHostConnect) {
   const std::vector<std::pair<std::string, std::string>> host_headers{
       {"localhost:443", "localhost:443"},
   };
-  for (const auto& host_pair : host_headers) {
-    auto& host_header = hostHeaderEntry(host_pair.first, true);
+  for (const auto& [host_header_name, host_header_value] : host_headers) {
+    auto& host_header = hostHeaderEntry(host_header_name, true);
     HeaderUtility::stripPortFromHost(headers_, 443);
-    EXPECT_EQ(host_header.value().getStringView(), host_pair.second);
+    EXPECT_EQ(host_header.value().getStringView(), host_header_value);
   }
 }
 

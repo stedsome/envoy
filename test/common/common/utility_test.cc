@@ -470,8 +470,8 @@ TEST(WeightedClusterUtil, pickCluster) {
 static std::string intervalSetIntToString(const IntervalSetImpl<int>& interval_set) {
   std::string out;
   const char* prefix = "";
-  for (const auto& interval : interval_set.toVector()) {
-    absl::StrAppend(&out, prefix, "[", interval.first, ", ", interval.second, ")");
+  for (const auto& [interval_left, interval_right] : interval_set.toVector()) {
+    absl::StrAppend(&out, prefix, "[", interval_left, ", ", interval_right, ")");
     prefix = ", ";
   }
   return out;

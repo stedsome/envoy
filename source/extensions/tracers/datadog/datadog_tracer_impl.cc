@@ -65,8 +65,8 @@ TraceReporter::TraceReporter(TraceEncoderSharedPtr encoder, Driver& driver,
     : driver_(driver), encoder_(encoder),
       collector_cluster_(driver_.clusterManager(), driver_.cluster()) {
   flush_timer_ = dispatcher.createTimer([this]() -> void {
-    for (auto& h : encoder_->headers()) {
-      lower_case_headers_.emplace(h.first, Http::LowerCaseString{h.first});
+    for (auto& [header_name, header_value] : encoder_->headers()) {
+      lower_case_headers_.emplace(header_name, Http::LowerCaseString{header_name});
     }
     driver_.tracerStats().timer_flushed_.inc();
     flushTraces();
@@ -93,8 +93,8 @@ void TraceReporter::flushTraces() {
     message->headers().setReferenceMethod(Http::Headers::get().MethodValues.Post);
     message->headers().setReferencePath(encoder_->path());
     message->headers().setReferenceHost(driver_.cluster());
-    for (auto& h : encoder_->headers()) {
-      message->headers().setReferenceKey(lower_case_headers_.at(h.first), h.second);
+    for (auto& [header_name, header_value] : encoder_->headers()) {
+      message->headers().setReferenceKey(lower_case_headers_.at(header_name), header_value);
     }
 
     Buffer::InstancePtr body(new Buffer::OwnedImpl());

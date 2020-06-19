@@ -162,10 +162,10 @@ void HotRestartingParent::Internal::recordDynamics(HotRestartMessage::Reply::Sta
   // for serialization.
   if (!spans.empty()) {
     HotRestartMessage::Reply::RepeatedSpan spans_proto;
-    for (const Stats::DynamicSpan& span : spans) {
+    for (const auto& [stat_name, span] : spans) {
       HotRestartMessage::Reply::Span* span_proto = spans_proto.add_spans();
-      span_proto->set_first(span.first);
-      span_proto->set_last(span.second);
+      span_proto->set_first(stat_name);
+      span_proto->set_last(span);
     }
     (*stats->mutable_dynamics())[name] = spans_proto;
   }

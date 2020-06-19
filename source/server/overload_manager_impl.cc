@@ -195,29 +195,26 @@ ThreadLocalOverloadState& OverloadManagerImpl::getThreadLocalOverloadState() {
 }
 
 void OverloadManagerImpl::updateResourcePressure(const std::string& resource, double pressure) {
-  auto action_range = resource_to_actions_.equal_range(resource);
-  std::for_each(action_range.first, action_range.second,
-                [&](ResourceToActionMap::value_type& entry) {
-                  const std::string& action = entry.second;
-                  auto action_it = actions_.find(action);
-                  ASSERT(action_it != actions_.end());
-                  if (action_it->second.updateResourcePressure(resource, pressure)) {
-                    const bool is_active = action_it->second.isActive();
-                    const auto state =
-                        is_active ? OverloadActionState::Active : OverloadActionState::Inactive;
-                    ENVOY_LOG(info, "Overload action {} became {}", action,
-                              is_active ? "active" : "inactive");
-                    tls_->runOnAllThreads([this, action, state] {
-                      tls_->getTyped<ThreadLocalOverloadState>().setState(action, state);
+  auto [action_range_start, action_range_end] = resource_to_actions_.equal_range(resource);
+  std::for_each(action_range_start, action_range_end, [&](ResourceToActionMap::value_type& entry) {
+    const std::string& action = entry.second;
+    auto action_it = actions_.find(action);
+    ASSERT(action_it != actions_.end());
+    if (action_it->second.updateResourcePressure(resource, pressure)) {
+      const bool is_active = action_it->second.isActive();
+      const auto state = is_active ? OverloadActionState::Active : OverloadActionState::Inactive;
+      ENVOY_LOG(info, "Overload action {} became {}", action, is_active ? "active" : "inactive");
+      tls_->runOnAllThreads([this, action, state] {
+        tls_->getTyped<ThreadLocalOverloadState>().setState(action, state);
+      });
+      auto [callback_range_start, callback_range_end] = action_to_callbacks_.equal_range(action);
+      std::for_each(callback_range_start, callback_range_end,
+                    [&](ActionToCallbackMap::value_type& cb_entry) {
+                      auto& cb = cb_entry.second;
+                      cb.dispatcher_.post([&, state]() { cb.callback_(state); });
                     });
-                    auto callback_range = action_to_callbacks_.equal_range(action);
-                    std::for_each(callback_range.first, callback_range.second,
-                                  [&](ActionToCallbackMap::value_type& cb_entry) {
-                                    auto& cb = cb_entry.second;
-                                    cb.dispatcher_.post([&, state]() { cb.callback_(state); });
-                                  });
-                  }
-                });
+    }
+  });
 }
 
 OverloadManagerImpl::Resource::Resource(const std::string& name, ResourceMonitorPtr monitor,
