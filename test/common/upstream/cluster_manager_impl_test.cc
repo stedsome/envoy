@@ -3081,17 +3081,18 @@ public:
     NiceMock<Network::MockConnectionSocket> socket;
     bool expect_success = true;
     for (const auto& name_val : names_vals) {
-      if (!name_val.first.hasValue()) {
+      const auto& [socket_option_name, socket_option_value] = name_val;
+      if (!socket_option_name.hasValue()) {
         expect_success = false;
         continue;
       }
-      EXPECT_CALL(socket,
-                  setSocketOption(name_val.first.level(), name_val.first.option(), _, sizeof(int)))
-          .WillOnce(
-              Invoke([&name_val](int, int, const void* optval, socklen_t) -> Api::SysCallIntResult {
-                EXPECT_EQ(name_val.second, *static_cast<const int*>(optval));
-                return {0, 0};
-              }));
+      EXPECT_CALL(socket, setSocketOption(socket_option_name.level(), socket_option_name.option(),
+                                          _, sizeof(int)))
+          .WillOnce(Invoke([socket_option_value = socket_option_value](
+                               int, int, const void* optval, socklen_t) -> Api::SysCallIntResult {
+            EXPECT_EQ(socket_option_value, *static_cast<const int*>(optval));
+            return {0, 0};
+          }));
     }
     EXPECT_CALL(socket, ipVersion())
         .WillRepeatedly(testing::Return(Network::Address::IpVersion::v4));

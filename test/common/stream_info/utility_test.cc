@@ -40,10 +40,10 @@ TEST(ResponseFlagUtilsTest, toShortStringConversion) {
       std::make_pair(ResponseFlag::UpstreamMaxStreamDurationReached, "UMSDR"),
       std::make_pair(ResponseFlag::ResponseFromCacheFilter, "RFCF")};
 
-  for (const auto& test_case : expected) {
+  for (const auto& [test_case_input, test_case_result] : expected) {
     NiceMock<MockStreamInfo> stream_info;
-    ON_CALL(stream_info, hasResponseFlag(test_case.first)).WillByDefault(Return(true));
-    EXPECT_EQ(test_case.second, ResponseFlagUtils::toShortString(stream_info));
+    ON_CALL(stream_info, hasResponseFlag(test_case_input)).WillByDefault(Return(true));
+    EXPECT_EQ(test_case_result, ResponseFlagUtils::toShortString(stream_info));
   }
 
   // No flag is set.

@@ -23,15 +23,17 @@ protected:
       items.emplace_back(ItemCount(std::string(item), count));
     });
     std::sort(items.begin(), items.end(), [](const ItemCount& a, const ItemCount& b) -> bool {
-      if (a.second == b.second) {
-        return a.first < b.first;
+      const auto& [a_name, a_count] = a;
+      const auto& [b_name, b_count] = b;
+      if (a_count == b_count) {
+        return a_name < b_name;
       }
-      return a.second < b.second;
+      return a_count < b_count;
     });
     std::vector<std::string> accum;
     accum.reserve(items.size());
-    for (const auto& item : items) {
-      accum.push_back(absl::StrCat(item.second, ": ", item.first));
+    for (const auto& [item_name, item_count] : items) {
+      accum.push_back(absl::StrCat(item_count, ": ", item_name));
     }
     return absl::StrJoin(accum, " ");
   }

@@ -211,16 +211,16 @@ TEST_P(LoadBalancerBaseTest, PrioritySelectionFuzz) {
                     const auto&) -> const HealthyAndDegradedLoad& { return original_load; }));
 
   for (uint64_t i = 0; i < total_hosts; ++i) {
-    const auto hs = lb_.chooseHostSet(&context);
-    switch (hs.second) {
+    const auto [hs, host_availability] = lb_.chooseHostSet(&context);
+    switch (host_availability) {
     case LoadBalancerBase::HostAvailability::Healthy:
       // Either we selected one of the healthy hosts or we failed to select anything and defaulted
       // to healthy.
-      EXPECT_TRUE(!hs.first.healthyHosts().empty() ||
-                  (hs.first.healthyHosts().empty() && hs.first.degradedHosts().empty()));
+      EXPECT_TRUE(!hs.healthyHosts().empty() ||
+                  (hs.healthyHosts().empty() && hs.degradedHosts().empty()));
       break;
     case LoadBalancerBase::HostAvailability::Degraded:
-      EXPECT_FALSE(hs.first.degradedHosts().empty());
+      EXPECT_FALSE(hs.degradedHosts().empty());
       break;
     }
   }

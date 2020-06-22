@@ -120,8 +120,8 @@ public:
   }
 
   void verifyMetadataMapVector(MetadataMapVector& expect, MetadataMapPtr&& metadata_map_ptr) {
-    for (const auto& metadata : *metadata_map_ptr) {
-      EXPECT_EQ(expect.front()->find(metadata.first)->second, metadata.second);
+    for (const auto& [metadata_key, metadata] : *metadata_map_ptr) {
+      EXPECT_EQ(expect.front()->find(metadata_key)->second, metadata);
     }
     expect.erase(expect.begin());
   }

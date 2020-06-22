@@ -1081,50 +1081,44 @@ TEST_F(RouterRetryStateImplTest, ParseRetryOn) {
   // RETRY_ON_5XX             0x1
   // RETRY_ON_GATEWAY_ERROR   0x2
   // RETRY_ON_CONNECT_FAILURE 0x4
-  std::string config = "5xx,gateway-error,connect-failure";
-  auto result = RetryStateImpl::parseRetryOn(config);
-  EXPECT_EQ(result.first, 7);
-  EXPECT_TRUE(result.second);
+  std::vector<std::string> configs = {
+      "5xx,gateway-error,connect-failure", "xxx,gateway-error,connect-failure",
+      " 5xx,gateway-error ,  connect-failure   ", " 5 xx,gateway-error ,  connect-failure   "};
+  std::vector<int> expected_results = {7, 6, 7, 6};
+  std::vector<bool> expected_status = {true, false, true, false};
 
-  config = "xxx,gateway-error,connect-failure";
-  result = RetryStateImpl::parseRetryOn(config);
-  EXPECT_EQ(result.first, 6);
-  EXPECT_FALSE(result.second);
-
-  config = " 5xx,gateway-error ,  connect-failure   ";
-  result = RetryStateImpl::parseRetryOn(config);
-  EXPECT_EQ(result.first, 7);
-  EXPECT_TRUE(result.second);
-
-  config = " 5 xx,gateway-error ,  connect-failure   ";
-  result = RetryStateImpl::parseRetryOn(config);
-  EXPECT_EQ(result.first, 6);
-  EXPECT_FALSE(result.second);
+  for (size_t i = 0; i < configs.size(); i++) {
+    auto [result, result_status] = RetryStateImpl::parseRetryOn(configs[i]);
+    EXPECT_EQ(result, expected_results[i]);
+    if (expected_status[i]) {
+      EXPECT_TRUE(result_status);
+    } else {
+      EXPECT_FALSE(result_status);
+    }
+  }
 }
 
 TEST_F(RouterRetryStateImplTest, ParseRetryGrpcOn) {
   // RETRY_ON_GRPC_CANCELLED             0x20
   // RETRY_ON_GRPC_DEADLINE_EXCEEDED     0x40
   // RETRY_ON_GRPC_RESOURCE_EXHAUSTED    0x80
-  std::string config = "cancelled,deadline-exceeded,resource-exhausted";
-  auto result = RetryStateImpl::parseRetryGrpcOn(config);
-  EXPECT_EQ(result.first, 224);
-  EXPECT_TRUE(result.second);
+  std::vector<std::string> configs = {
+      "cancelled,deadline-exceeded,resource-exhausted",
+      "cancelled,deadline-exceeded,resource-exhaust",
+      "   cancelled,deadline-exceeded   ,   resource-exhausted   ",
+      "   cancelled,deadline-exceeded   ,   resource- exhausted   "};
+  std::vector<int> expected_results = {224, 96, 224, 96};
+  std::vector<bool> expected_status = {true, false, true, false};
 
-  config = "cancelled,deadline-exceeded,resource-exhaust";
-  result = RetryStateImpl::parseRetryGrpcOn(config);
-  EXPECT_EQ(result.first, 96);
-  EXPECT_FALSE(result.second);
-
-  config = "   cancelled,deadline-exceeded   ,   resource-exhausted   ";
-  result = RetryStateImpl::parseRetryGrpcOn(config);
-  EXPECT_EQ(result.first, 224);
-  EXPECT_TRUE(result.second);
-
-  config = "   cancelled,deadline-exceeded   ,   resource- exhausted   ";
-  result = RetryStateImpl::parseRetryGrpcOn(config);
-  EXPECT_EQ(result.first, 96);
-  EXPECT_FALSE(result.second);
+  for (size_t i = 0; i < configs.size(); i++) {
+    auto [result, result_status] = RetryStateImpl::parseRetryGrpcOn(configs[i]);
+    EXPECT_EQ(result, expected_results[i]);
+    if (expected_status[i]) {
+      EXPECT_TRUE(result_status);
+    } else {
+      EXPECT_FALSE(result_status);
+    }
+  }
 }
 
 } // namespace

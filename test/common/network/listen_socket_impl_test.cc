@@ -44,9 +44,7 @@ protected:
     while (true) {
       ++loop_number;
 
-      auto addr_fd = Network::Test::bindFreeLoopbackPort(version_, Socket::Type::Stream);
-      auto addr = addr_fd.first;
-      SocketPtr& sock = addr_fd.second;
+      auto [addr, sock] = Network::Test::bindFreeLoopbackPort(version_, Socket::Type::Stream);
       EXPECT_TRUE(SOCKET_VALID(sock->ioHandle().fd()));
 
       // Confirm that we got a reasonable address and port.

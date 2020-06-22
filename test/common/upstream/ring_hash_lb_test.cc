@@ -471,9 +471,9 @@ TEST_P(RingHashLoadBalancerTest, HostWeightedTinyRing) {
   std::unordered_map<uint64_t, uint32_t> expected{
       {928266305478181108UL, 2},  {4443673547860492590UL, 2},  {5583722120771150861UL, 1},
       {6311230543546372928UL, 1}, {13444792449719432967UL, 2}, {16117243373044804889UL, 0}};
-  for (const auto& entry : expected) {
-    TestLoadBalancerContext context(entry.first);
-    EXPECT_EQ(hostSet().hosts_[entry.second], lb->chooseHost(&context));
+  for (const auto& [input, expected_result] : expected) {
+    TestLoadBalancerContext context(input);
+    EXPECT_EQ(hostSet().hosts_[expected_result], lb->chooseHost(&context));
   }
 }
 
@@ -550,9 +550,9 @@ TEST_P(RingHashLoadBalancerTest, LocalityWeightedTinyRing) {
   std::unordered_map<uint64_t, uint32_t> expected{
       {928266305478181108UL, 2},  {4443673547860492590UL, 2},  {5583722120771150861UL, 1},
       {6311230543546372928UL, 1}, {13444792449719432967UL, 2}, {16117243373044804889UL, 0}};
-  for (const auto& entry : expected) {
-    TestLoadBalancerContext context(entry.first);
-    EXPECT_EQ(hostSet().hosts_[entry.second], lb->chooseHost(&context));
+  for (const auto& [input, expected_result] : expected) {
+    TestLoadBalancerContext context(input);
+    EXPECT_EQ(hostSet().hosts_[expected_result], lb->chooseHost(&context));
   }
 }
 
@@ -621,9 +621,9 @@ TEST_P(RingHashLoadBalancerTest, HostAndLocalityWeightedTinyRing) {
       {928266305478181108UL, 2},   {3851675632748031481UL, 3},  {5583722120771150861UL, 1},
       {6311230543546372928UL, 1},  {7700377290971790572UL, 3},  {12559126875973811811UL, 3},
       {13444792449719432967UL, 2}, {13784988426630141778UL, 3}, {16117243373044804889UL, 0}};
-  for (const auto& entry : expected) {
-    TestLoadBalancerContext context(entry.first);
-    EXPECT_EQ(hostSet().hosts_[entry.second], lb->chooseHost(&context));
+  for (const auto& [input, expected_result] : expected) {
+    TestLoadBalancerContext context(input);
+    EXPECT_EQ(hostSet().hosts_[expected_result], lb->chooseHost(&context));
   }
 }
 
@@ -767,9 +767,9 @@ TEST_P(RingHashLoadBalancerTest, LopsidedWeightSmallScale) {
       {11664790346325243808UL, 1},   {15894554872961148518UL, 128}, {13958138884277627155UL, 256},
       {15803774069438192949UL, 384}, {3829253010855396576UL, 512},  {17918147347826565154UL, 640},
       {6442769608292299103UL, 768},  {5881074926069334434UL, 896}};
-  for (const auto& entry : expected) {
-    TestLoadBalancerContext context(entry.first);
-    EXPECT_EQ(hostSet().hosts_[entry.second], lb->chooseHost(&context));
+  for (const auto& [input, expected_result] : expected) {
+    TestLoadBalancerContext context(input);
+    EXPECT_EQ(hostSet().hosts_[expected_result], lb->chooseHost(&context));
   }
 }
 
