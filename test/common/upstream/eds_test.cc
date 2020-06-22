@@ -445,13 +445,13 @@ TEST_F(EdsTest, EndpointHealthStatus) {
       };
 
   int port = 80;
-  for (auto hs : health_status_expected) {
+  for (auto [health_status, health] : health_status_expected) {
     auto* endpoint = endpoints->add_lb_endpoints();
     auto* socket_address =
         endpoint->mutable_endpoint()->mutable_address()->mutable_socket_address();
     socket_address->set_address("1.2.3.4");
     socket_address->set_port_value(port++);
-    endpoint->set_health_status(hs.first);
+    endpoint->set_health_status(health_status);
   }
 
   initialize();

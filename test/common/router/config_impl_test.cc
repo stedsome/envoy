@@ -5871,8 +5871,8 @@ TEST_F(ConfigUtilityTest, ParseResponseCode) {
                          Http::Code::TemporaryRedirect),
           std::make_pair(envoy::config::route::v3::RedirectAction::PERMANENT_REDIRECT,
                          Http::Code::PermanentRedirect)};
-  for (const auto& test_case : test_set) {
-    EXPECT_EQ(test_case.second, ConfigUtility::parseRedirectResponseCode(test_case.first));
+  for (const auto& [test_case_condition, test_case_result] : test_set) {
+    EXPECT_EQ(test_case_result, ConfigUtility::parseRedirectResponseCode(test_case_condition));
   }
 }
 

@@ -70,17 +70,18 @@ TEST(TruncateIpAddressAndLength, Various) {
   };
   test_cases.size();
   for (const auto& kv : test_cases) {
-    InstanceConstSharedPtr inPtr = Utility::parseInternetAddress(kv.first.first);
-    EXPECT_NE(inPtr, nullptr) << kv.first.first;
-    int length_io = kv.first.second;
+    const auto& [key, value] = kv;
+    InstanceConstSharedPtr inPtr = Utility::parseInternetAddress(key.first);
+    EXPECT_NE(inPtr, nullptr) << key.first;
+    int length_io = key.second;
     InstanceConstSharedPtr outPtr = CidrRange::truncateIpAddressAndLength(inPtr, &length_io);
-    if (kv.second.second == -1) {
+    if (value.second == -1) {
       EXPECT_EQ(outPtr, nullptr) << outPtr->asString() << "\n" << kv;
       EXPECT_EQ(length_io, -1) << kv;
     } else {
       ASSERT_NE(outPtr, nullptr) << kv;
-      EXPECT_EQ(outPtr->ip()->addressAsString(), kv.second.first) << kv;
-      EXPECT_EQ(length_io, kv.second.second) << kv;
+      EXPECT_EQ(outPtr->ip()->addressAsString(), value.first) << kv;
+      EXPECT_EQ(length_io, value.second) << kv;
     }
   }
 }

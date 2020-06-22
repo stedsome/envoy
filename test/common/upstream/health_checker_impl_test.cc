@@ -417,9 +417,9 @@ public:
   void appendTestHosts(std::shared_ptr<MockClusterMockPrioritySet> cluster,
                        const HostWithHealthCheckMap& hosts, const std::string& protocol = "tcp://",
                        const uint32_t priority = 0) {
-    for (const auto& host : hosts) {
+    for (const auto& [host_name, host_info] : hosts) {
       cluster->prioritySet().getMockHostSet(priority)->hosts_.emplace_back(
-          makeTestHost(cluster->info_, fmt::format("{}{}", protocol, host.first), host.second));
+          makeTestHost(cluster->info_, fmt::format("{}{}", protocol, host_name), host_info));
     }
   }
 
@@ -3774,8 +3774,8 @@ public:
     const bool trailers_empty = spec.trailers.empty();
     const bool end_stream_on_headers = spec.body_chunks.empty() && trailers_empty;
     auto response_headers = std::make_unique<Http::TestResponseHeaderMapImpl>();
-    for (const auto& header : spec.response_headers) {
-      response_headers->addCopy(header.first, header.second);
+    for (const auto& [header_key, header_val] : spec.response_headers) {
+      response_headers->addCopy(header_key, header_val);
     }
     test_sessions_[index]->stream_response_callbacks_->decodeHeaders(std::move(response_headers),
                                                                      end_stream_on_headers);
@@ -3792,8 +3792,8 @@ public:
     }
     if (!trailers_empty) {
       auto trailers = std::make_unique<Http::TestResponseTrailerMapImpl>();
-      for (const auto& header : spec.trailers) {
-        trailers->addCopy(header.first, header.second);
+      for (const auto& [header_key, header_val] : spec.trailers) {
+        trailers->addCopy(header_key, header_val);
       }
       test_sessions_[index]->stream_response_callbacks_->decodeTrailers(std::move(trailers));
     }

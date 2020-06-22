@@ -674,10 +674,10 @@ TEST_P(StatNameTest, SharedStatNameStorageSetInsertAndFind) {
   const int iters = 10;
   for (int i = 0; i < iters; ++i) {
     std::string foo = absl::StrCat("foo", i);
-    auto insertion = set.insert(StatNameStorage(foo, *table_));
+    auto [insertion_iter, insertion_status] = set.insert(StatNameStorage(foo, *table_));
     StatNameManagedStorage temp_foo(foo, *table_);
     auto found = set.find(temp_foo.statName());
-    EXPECT_EQ(found->statName().data(), insertion.first->statName().data());
+    EXPECT_EQ(found->statName().data(), insertion_iter->statName().data());
   }
   StatNameManagedStorage bar("bar", *table_);
   EXPECT_EQ(set.end(), set.find(bar.statName()));

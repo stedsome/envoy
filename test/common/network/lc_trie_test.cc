@@ -20,9 +20,10 @@ public:
     std::vector<std::pair<std::string, std::vector<Address::CidrRange>>> output;
     for (size_t i = 0; i < cidr_range_strings.size(); i++) {
       std::pair<std::string, std::vector<Address::CidrRange>> ip_tags;
-      ip_tags.first = fmt::format("tag_{0}", i);
+      auto& [ip_tags_key, ip_tags_cidr_range] = ip_tags;
+      ip_tags_key = fmt::format("tag_{0}", i);
       for (const auto& j : cidr_range_strings[i]) {
-        ip_tags.second.push_back(Address::CidrRange::create(j));
+        ip_tags_cidr_range.push_back(Address::CidrRange::create(j));
       }
       output.push_back(ip_tags);
     }
@@ -37,10 +38,10 @@ public:
 
   void expectIPAndTags(
       const std::vector<std::pair<std::string, std::vector<std::string>>>& test_output) {
-    for (const auto& kv : test_output) {
-      std::vector<std::string> expected(kv.second);
+    for (const auto& [key, value] : test_output) {
+      std::vector<std::string> expected(value);
       std::sort(expected.begin(), expected.end());
-      std::vector<std::string> actual(trie_->getData(Utility::parseInternetAddress(kv.first)));
+      std::vector<std::string> actual(trie_->getData(Utility::parseInternetAddress(key)));
       std::sort(actual.begin(), actual.end());
       EXPECT_EQ(expected, actual);
     }
