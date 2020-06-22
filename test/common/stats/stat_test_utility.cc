@@ -245,10 +245,10 @@ void serializeDeserializeString(absl::string_view in) {
   mem_block.appendData(absl::MakeSpan(data, data + in.size()));
   RELEASE_ASSERT(mem_block.capacityRemaining() == 0, "");
   absl::Span<uint8_t> span = mem_block.span();
-  const std::pair<uint64_t, uint64_t> number_consumed =
+  const auto [decoded_number, bytes_consumed] =
       SymbolTableImpl::Encoding::decodeNumber(span.data());
-  RELEASE_ASSERT(number_consumed.first == in.size(), absl::StrCat("size matches: ", in));
-  span.remove_prefix(number_consumed.second);
+  RELEASE_ASSERT(decoded_number == in.size(), absl::StrCat("size matches: ", in));
+  span.remove_prefix(bytes_consumed);
   const absl::string_view out(reinterpret_cast<const char*>(span.data()), span.size());
   RELEASE_ASSERT(in == out, absl::StrCat("'", in, "' != '", out, "'"));
 }

@@ -63,12 +63,12 @@ private:
 class TestMetadataMatchCriteria : public Router::MetadataMatchCriteria {
 public:
   TestMetadataMatchCriteria(const std::map<std::string, std::string> matches) {
-    for (const auto& it : matches) {
+    for (const auto& [name, value] : matches) {
       ProtobufWkt::Value v;
-      v.set_string_value(it.second);
+      v.set_string_value(value);
 
       matches_.emplace_back(
-          std::make_shared<const TestMetadataMatchCriterion>(it.first, HashedValue(v)));
+          std::make_shared<const TestMetadataMatchCriterion>(name, HashedValue(v)));
     }
   }
 
@@ -136,10 +136,10 @@ public:
     });
   }
 
-  void configureHostSet(const HostURLMetadataMap& host_metadata, MockHostSet& host_set) {
+  void configureHostSet(const HostURLMetadataMap& hosts_metadata, MockHostSet& host_set) {
     HostVector hosts;
-    for (const auto& it : host_metadata) {
-      hosts.emplace_back(makeHost(it.first, it.second));
+    for (const auto& [name, host_metadata] : hosts_metadata) {
+      hosts.emplace_back(makeHost(name, host_metadata));
     }
 
     host_set.hosts_ = hosts;
@@ -153,15 +153,15 @@ public:
                                 MockHostSet& host_set, LocalityWeights locality_weights) {
     HostVector first_locality;
     HostVector all_hosts;
-    for (const auto& it : first_locality_host_metadata) {
-      auto host = makeHost(it.first, it.second);
+    for (const auto& [host_name, host_metadata] : first_locality_host_metadata) {
+      auto host = makeHost(host_name, host_metadata);
       first_locality.emplace_back(host);
       all_hosts.emplace_back(host);
     }
 
     HostVector second_locality;
-    for (const auto& it : second_locality_host_metadata) {
-      auto host = makeHost(it.first, it.second);
+    for (const auto& [host_name, host_metadata] : second_locality_host_metadata) {
+      auto host = makeHost(host_name, host_metadata);
       second_locality.emplace_back(host);
       all_hosts.emplace_back(host);
     }
@@ -198,10 +198,10 @@ public:
 
     HostVector hosts;
     std::vector<HostVector> hosts_per_locality;
-    for (const auto& host_metadata : host_metadata_per_locality) {
+    for (const auto& hosts_metadata : host_metadata_per_locality) {
       HostVector locality_hosts;
-      for (const auto& host_entry : host_metadata) {
-        HostSharedPtr host = makeHost(host_entry.first, host_entry.second);
+      for (const auto& [host_name, host_metadata] : hosts_metadata) {
+        HostSharedPtr host = makeHost(host_name, host_metadata);
         hosts.emplace_back(host);
         locality_hosts.emplace_back(host);
       }
@@ -216,10 +216,10 @@ public:
 
     local_hosts_ = std::make_shared<HostVector>();
     std::vector<HostVector> local_hosts_per_locality_vector;
-    for (const auto& local_host_metadata : local_host_metadata_per_locality) {
+    for (const auto& local_hosts_metadata : local_host_metadata_per_locality) {
       HostVector local_locality_hosts;
-      for (const auto& host_entry : local_host_metadata) {
-        HostSharedPtr host = makeHost(host_entry.first, host_entry.second);
+      for (const auto& [host_name, host_metadata] : local_hosts_metadata) {
+        HostSharedPtr host = makeHost(host_name, host_metadata);
         local_hosts_->emplace_back(host);
         local_locality_hosts.emplace_back(host);
       }
@@ -243,19 +243,20 @@ public:
 
   HostSharedPtr makeHost(const std::string& url, const HostMetadata& metadata) {
     envoy::config::core::v3::Metadata m;
-    for (const auto& m_it : metadata) {
-      Config::Metadata::mutableMetadataValue(m, Config::MetadataFilters::get().ENVOY_LB, m_it.first)
-          .set_string_value(m_it.second);
+    for (const auto& [m_it_filter, m_it_key] : metadata) {
+      Config::Metadata::mutableMetadataValue(m, Config::MetadataFilters::get().ENVOY_LB,
+                                             m_it_filter)
+          .set_string_value(m_it_key);
     }
 
     return makeTestHost(info_, url, m);
   }
   HostSharedPtr makeHost(const std::string& url, const HostListMetadata& metadata) {
     envoy::config::core::v3::Metadata m;
-    for (const auto& m_it : metadata) {
+    for (const auto& [m_it_filter, m_it_key] : metadata) {
       auto& metadata = Config::Metadata::mutableMetadataValue(
-          m, Config::MetadataFilters::get().ENVOY_LB, m_it.first);
-      for (const auto& value : m_it.second) {
+          m, Config::MetadataFilters::get().ENVOY_LB, m_it_filter);
+      for (const auto& value : m_it_key) {
         metadata.mutable_list_value()->add_values()->set_string_value(value);
       }
     }
@@ -267,10 +268,10 @@ public:
     ProtobufWkt::Struct default_subset;
 
     auto* fields = default_subset.mutable_fields();
-    for (const auto& it : metadata) {
+    for (const auto& [mt_name, mt_value] : metadata) {
       ProtobufWkt::Value v;
-      v.set_string_value(it.second);
-      fields->insert({it.first, v});
+      v.set_string_value(mt_value);
+      fields->insert({mt_name, v});
     }
 
     return default_subset;

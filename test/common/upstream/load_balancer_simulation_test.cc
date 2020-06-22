@@ -82,16 +82,15 @@ TEST(DISABLED_LeastRequestLoadBalancerWeightTest, Weight) {
   }
 
   std::unordered_map<uint64_t, double> weight_to_percent;
-  for (const auto& host : host_hits) {
+  for (const auto& [host, hits] : host_hits) {
     std::cout << fmt::format("url:{}, weight:{}, hits:{}, percent_of_total:{}\n",
-                             host.first->address()->asString(), host.first->weight(), host.second,
-                             (static_cast<double>(host.second) / total_requests) * 100);
-    weight_to_percent[host.first->weight()] +=
-        (static_cast<double>(host.second) / total_requests) * 100;
+                             host->address()->asString(), host->weight(), hits,
+                             (static_cast<double>(hits) / total_requests) * 100);
+    weight_to_percent[host->weight()] += (static_cast<double>(hits) / total_requests) * 100;
   }
 
-  for (const auto& weight : weight_to_percent) {
-    std::cout << fmt::format("weight:{}, percent:{}\n", weight.first, weight.second);
+  for (const auto& [weight, percent] : weight_to_percent) {
+    std::cout << fmt::format("weight:{}, percent:{}\n", weight, percent);
   }
 }
 
@@ -176,10 +175,9 @@ public:
     }
 
     double mean = total_number_of_requests * 1.0 / hits.size();
-    for (const auto& host_hit_num_pair : hits) {
-      double percent_diff = std::abs((mean - host_hit_num_pair.second) / mean) * 100;
-      std::cout << fmt::format("url:{}, hits:{}, {} % from mean", host_hit_num_pair.first,
-                               host_hit_num_pair.second, percent_diff)
+    for (const auto& [host, hit] : hits) {
+      double percent_diff = std::abs((mean - hit) / mean) * 100;
+      std::cout << fmt::format("url:{}, hits:{}, {} % from mean", host, hit, percent_diff)
                 << std::endl;
     }
   }
