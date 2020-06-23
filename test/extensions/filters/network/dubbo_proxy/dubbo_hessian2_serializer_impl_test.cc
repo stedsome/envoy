@@ -33,10 +33,9 @@ TEST(HessianProtocolTest, deserializeRpcInvocation) {
     }));
     std::shared_ptr<ContextImpl> context = std::make_shared<ContextImpl>();
     context->set_body_size(buffer.length());
-    auto result = serializer.deserializeRpcInvocation(buffer, context);
-    EXPECT_TRUE(result.second);
+    auto [invo, invo_status] = serializer.deserializeRpcInvocation(buffer, context);
+    EXPECT_TRUE(invo_status);
 
-    auto invo = result.first;
     EXPECT_STREQ("test", invo->method_name().c_str());
     EXPECT_STREQ("test", invo->service_name().c_str());
     EXPECT_STREQ("0.0.0", invo->service_version().value().c_str());
@@ -71,9 +70,9 @@ TEST(HessianProtocolTest, deserializeRpcResult) {
         0x04, 't', 'e', 's', 't', // return body
     }));
     context->set_body_size(4);
-    auto result = serializer.deserializeRpcResult(buffer, context);
-    EXPECT_TRUE(result.second);
-    EXPECT_FALSE(result.first->hasException());
+    auto [rpc_result, status] = serializer.deserializeRpcResult(buffer, context);
+    EXPECT_TRUE(status);
+    EXPECT_FALSE(rpc_result->hasException());
   }
 
   {
@@ -83,9 +82,9 @@ TEST(HessianProtocolTest, deserializeRpcResult) {
         0x04, 't', 'e', 's', 't', // return body
     }));
     context->set_body_size(4);
-    auto result = serializer.deserializeRpcResult(buffer, context);
-    EXPECT_TRUE(result.second);
-    EXPECT_TRUE(result.first->hasException());
+    auto [rpc_result, status] = serializer.deserializeRpcResult(buffer, context);
+    EXPECT_TRUE(status);
+    EXPECT_TRUE(rpc_result->hasException());
   }
 
   {
@@ -95,9 +94,9 @@ TEST(HessianProtocolTest, deserializeRpcResult) {
         0x04, 't', 'e', 's', 't', // return body
     }));
     context->set_body_size(4);
-    auto result = serializer.deserializeRpcResult(buffer, context);
-    EXPECT_TRUE(result.second);
-    EXPECT_TRUE(result.first->hasException());
+    auto [rpc_result, status] = serializer.deserializeRpcResult(buffer, context);
+    EXPECT_TRUE(status);
+    EXPECT_TRUE(rpc_result->hasException());
   }
 
   {
@@ -107,9 +106,9 @@ TEST(HessianProtocolTest, deserializeRpcResult) {
         0x04, 't', 'e', 's', 't', // return body
     }));
     context->set_body_size(4);
-    auto result = serializer.deserializeRpcResult(buffer, context);
-    EXPECT_TRUE(result.second);
-    EXPECT_TRUE(result.first->hasException());
+    auto [rpc_result, status] = serializer.deserializeRpcResult(buffer, context);
+    EXPECT_TRUE(status);
+    EXPECT_TRUE(rpc_result->hasException());
   }
 
   // incorrect body size
@@ -181,8 +180,8 @@ TEST(HessianProtocolTest, serializeRpcResult) {
   size_t body_size = mock_response.size() + sizeof(mock_response_type);
   std::shared_ptr<ContextImpl> context = std::make_shared<ContextImpl>();
   context->set_body_size(body_size);
-  auto result = serializer.deserializeRpcResult(buffer, context);
-  EXPECT_TRUE(result.first->hasException());
+  auto result = serializer.deserializeRpcResult(buffer, context).first;
+  EXPECT_TRUE(result->hasException());
 }
 
 } // namespace DubboProxy

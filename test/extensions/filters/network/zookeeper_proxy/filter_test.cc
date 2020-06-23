@@ -18,8 +18,8 @@ namespace ZooKeeperProxy {
 
 bool protoMapEq(const ProtobufWkt::Struct& obj, const std::map<std::string, std::string>& rhs) {
   EXPECT_TRUE(!rhs.empty());
-  for (auto const& entry : rhs) {
-    EXPECT_EQ(obj.fields().at(entry.first).string_value(), entry.second);
+  for (auto const& [entry_key, entry_value] : rhs) {
+    EXPECT_EQ(obj.fields().at(entry_key).string_value(), entry_value);
   }
   return true;
 }
@@ -376,14 +376,14 @@ public:
     Buffer::OwnedImpl buffer;
     Buffer::OwnedImpl requests;
 
-    for (const auto& op_pair : ops) {
+    for (const auto& [key, payload] : ops) {
       // Header.
-      requests.writeBEInt<int32_t>(op_pair.first);
+      requests.writeBEInt<int32_t>(key);
       requests.add(std::string(1, 0b0));
       requests.writeBEInt<int32_t>(-1);
 
       // Payload.
-      requests.add(op_pair.second);
+      requests.add(payload);
     }
 
     // Done header.

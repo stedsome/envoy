@@ -351,9 +351,9 @@ TEST_P(ThriftObjectImplValueTest, ParseNestedMapValue) {
   EXPECT_EQ(field_type, nested.keyType());
   EXPECT_EQ(FieldType::String, nested.valueType());
   EXPECT_EQ(2, nested.elements().size());
-  for (auto& value : nested.elements()) {
-    checkValue(field_type, *value.first);
-    checkValue(FieldType::String, *value.second);
+  for (auto& [nested_key_type, nested_elem_type] : nested.elements()) {
+    checkValue(field_type, *nested_key_type);
+    checkValue(FieldType::String, *nested_elem_type);
   }
 }
 

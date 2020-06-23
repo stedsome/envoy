@@ -215,7 +215,7 @@ static void headerMapImplPopulate(benchmark::State& state) {
   for (auto _ : state) {
     auto headers = Http::ResponseHeaderMapImpl::create();
     for (const auto& [header_key, header_value] : headers_to_add) {
-      headers.addReference(header_key, header_value);
+      headers->addReference(header_key, header_value);
     }
     benchmark::DoNotOptimize(headers->size());
   }

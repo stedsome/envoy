@@ -182,8 +182,9 @@ std::vector<std::pair<Network::Address::IpVersion, QuicVersionType>> generateTes
 std::string testParamsToString(
     const ::testing::TestParamInfo<std::pair<Network::Address::IpVersion, QuicVersionType>>&
         params) {
-  std::string ip_version = params.param.first == Network::Address::IpVersion::v4 ? "IPv4" : "IPv6";
-  switch (params.param.second) {
+  const auto& [param_ip_version, param_quick_version] = params.param;
+  std::string ip_version = param_ip_version == Network::Address::IpVersion::v4 ? "IPv4" : "IPv6";
+  switch (param_quick_version) {
   case QuicVersionType::GquicQuicCrypto:
     return absl::StrCat(ip_version, "_UseGQuicWithQuicCrypto");
   case QuicVersionType::GquicTls:

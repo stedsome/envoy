@@ -201,8 +201,8 @@ void testIncomingHeaders(
       {":method", "GET"},
       {"x-request-id", "foo"},
   };
-  for (const auto& kv : headers) {
-    request_headers.addCopy(Http::LowerCaseString(kv.first), kv.second);
+  for (const auto& [header_key, header_value] : headers) {
+    request_headers.addCopy(Http::LowerCaseString(header_key), header_value);
   }
 
   const std::string operation_name{"my_operation_2"};

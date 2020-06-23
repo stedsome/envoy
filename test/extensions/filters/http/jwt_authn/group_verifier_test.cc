@@ -79,10 +79,10 @@ public:
                                  mock_factory_);
   }
   void createSyncMockAuthsAndVerifier(const StatusMap& statuses) {
-    for (const auto& it : statuses) {
+    for (const auto& [issuer, status] : statuses) {
       auto mock_auth = std::make_unique<MockAuthenticator>();
       EXPECT_CALL(*mock_auth, doVerify(_, _, _, _, _))
-          .WillOnce(Invoke([issuer = it.first, status = it.second](
+          .WillOnce(Invoke([issuer = issuer, status = status](
                                Http::HeaderMap&, Tracing::Span&, std::vector<JwtLocationConstPtr>*,
                                SetPayloadCallback set_payload_cb, AuthenticatorCallback callback) {
             if (status == Status::Ok) {
@@ -92,7 +92,7 @@ public:
             callback(status);
           }));
       EXPECT_CALL(*mock_auth, onDestroy()).Times(1);
-      mock_auths_[it.first] = std::move(mock_auth);
+      mock_auths_[issuer] = std::move(mock_auth);
     }
     createVerifier();
   }

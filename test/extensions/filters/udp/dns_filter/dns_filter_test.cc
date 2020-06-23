@@ -481,9 +481,9 @@ TEST_F(DnsFilterTest, LocalTypeAAAAQuerySuccess) {
   EXPECT_EQ(expected.size(), query_ctx_->answers_.size());
 
   // Verify the address returned
-  for (const auto& answer : query_ctx_->answers_) {
-    EXPECT_EQ(answer.first, domain);
-    Utils::verifyAddress(expected, answer.second);
+  for (const auto& [answer_domain, answer_address] : query_ctx_->answers_) {
+    EXPECT_EQ(answer_domain, domain);
+    Utils::verifyAddress(expected, answer_address);
   }
 
   // Validate stats
@@ -529,9 +529,9 @@ TEST_F(DnsFilterTest, ExternalResolutionReturnSingleAddress) {
   EXPECT_EQ(1, query_ctx_->answers_.size());
 
   std::list<std::string> expected{expected_address};
-  for (const auto& answer : query_ctx_->answers_) {
-    EXPECT_EQ(answer.first, domain);
-    Utils::verifyAddress(expected, answer.second);
+  for (const auto& [answer_domain, answer_address] : query_ctx_->answers_) {
+    EXPECT_EQ(answer_domain, domain);
+    Utils::verifyAddress(expected, answer_address);
   }
 
   // Validate stats
@@ -582,9 +582,9 @@ TEST_F(DnsFilterTest, ExternalResolutionIpv6SingleAddress) {
   EXPECT_EQ(1, query_ctx_->answers_.size());
 
   std::list<std::string> expected{expected_address};
-  for (const auto& answer : query_ctx_->answers_) {
-    EXPECT_EQ(answer.first, domain);
-    Utils::verifyAddress(expected, answer.second);
+  for (const auto& [answer_domain, answer_address] : query_ctx_->answers_) {
+    EXPECT_EQ(answer_domain, domain);
+    Utils::verifyAddress(expected, answer_address);
   }
 
   // Validate stats
@@ -636,9 +636,9 @@ TEST_F(DnsFilterTest, ExternalResolutionReturnMultipleAddresses) {
 
   EXPECT_LT(udp_response_.buffer_->length(), Utils::MAX_UDP_DNS_SIZE);
 
-  for (const auto& answer : query_ctx_->answers_) {
-    EXPECT_EQ(answer.first, domain);
-    Utils::verifyAddress(expected_address, answer.second);
+  for (const auto& [answer_domain, answer_address] : query_ctx_->answers_) {
+    EXPECT_EQ(answer_domain, domain);
+    Utils::verifyAddress(expected_address, answer_address);
   }
 
   // Validate stats
@@ -852,9 +852,9 @@ TEST_F(DnsFilterTest, ConsumeExternalJsonTableTest) {
 
   // Verify the address returned
   const std::list<std::string> expected{"10.0.0.1", "10.0.0.2"};
-  for (const auto& answer : query_ctx_->answers_) {
-    EXPECT_EQ(answer.first, domain);
-    Utils::verifyAddress(expected, answer.second);
+  for (const auto& [answer_domain, answer_address] : query_ctx_->answers_) {
+    EXPECT_EQ(answer_domain, domain);
+    Utils::verifyAddress(expected, answer_address);
   }
 
   // Validate stats
@@ -886,9 +886,9 @@ TEST_F(DnsFilterTest, ConsumeExternalYamlTableTest) {
 
   // Verify the address returned
   const std::list<std::string> expected{"10.0.0.1", "10.0.0.2"};
-  for (const auto& answer : query_ctx_->answers_) {
-    EXPECT_EQ(answer.first, domain);
-    Utils::verifyAddress(expected, answer.second);
+  for (const auto& [answer_domain, answer_address] : query_ctx_->answers_) {
+    EXPECT_EQ(answer_domain, domain);
+    Utils::verifyAddress(expected, answer_address);
   }
 
   // Validate stats

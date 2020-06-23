@@ -107,16 +107,16 @@ void DnsFilterResolver::onResolveTimeout() {
   ENVOY_LOG(trace, "Pending queries: {}", lookups_.size());
 
   // Find an outstanding pending query and purge it
-  for (auto& ctx_iter : lookups_) {
-    if (ctx_iter.second.expiry <= now &&
-        ctx_iter.second.resolver_status == DnsFilterResolverStatus::Pending) {
-      auto ctx = std::move(ctx_iter.second);
+  for (auto& [query_record, lookup_ctx] : lookups_) {
+    if (lookup_ctx.expiry <= now &&
+        lookup_ctx.resolver_status == DnsFilterResolverStatus::Pending) {
+      auto ctx = std::move(lookup_ctx);
 
-      ENVOY_LOG(trace, "Purging expired query: {}", ctx_iter.first->name_);
+      ENVOY_LOG(trace, "Purging expired query: {}", query_record->name_);
 
       ctx.query_context->resolution_status_ = Network::DnsResolver::ResolutionStatus::Failure;
 
-      lookups_.erase(ctx_iter.first);
+      lookups_.erase(query_record);
       callback_(std::move(ctx.query_context), ctx.query_rec, ctx.resolved_hosts);
       return;
     }

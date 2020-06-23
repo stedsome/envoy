@@ -63,8 +63,8 @@ public:
 
     absl::flat_hash_map<std::string, Extensions::Common::DynamicForwardProxy::DnsHostInfoSharedPtr>
         existing_hosts;
-    for (const auto& host : host_map_) {
-      existing_hosts.emplace(host.first, host.second);
+    for (const auto& [host_name, host] : host_map_) {
+      existing_hosts.emplace(host_name, host);
     }
     EXPECT_CALL(*dns_cache_manager_->dns_cache_, hosts()).WillOnce(Return(existing_hosts));
     if (!existing_hosts.empty()) {

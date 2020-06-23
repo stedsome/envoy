@@ -100,8 +100,8 @@ public:
     envoy::service::auth::v3::CheckRequest request{};
     auto mutable_headers =
         request.mutable_attributes()->mutable_request()->mutable_http()->mutable_headers();
-    for (const auto& header : headers) {
-      (*mutable_headers)[header.first] = header.second;
+    for (const auto& [header_key, header_value] : headers) {
+      (*mutable_headers)[header_key] = header_value;
     }
 
     Http::RequestMessagePtr message_ptr;
