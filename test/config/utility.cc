@@ -536,10 +536,9 @@ void ConfigHelper::addClusterFilterMetadata(absl::string_view metadata_yaml,
     if (cluster->name() != cluster_name) {
       continue;
     }
-    for (const auto& kvp : cluster_metadata.fields()) {
-      ASSERT_TRUE(kvp.second.kind_case() == ProtobufWkt::Value::KindCase::kStructValue);
-      cluster->mutable_metadata()->mutable_filter_metadata()->insert(
-          {kvp.first, kvp.second.struct_value()});
+    for (const auto& [key, value] : cluster_metadata.fields()) {
+      ASSERT_TRUE(value.kind_case() == ProtobufWkt::Value::KindCase::kStructValue);
+      cluster->mutable_metadata()->mutable_filter_metadata()->insert({key, value.struct_value()});
     }
     break;
   }

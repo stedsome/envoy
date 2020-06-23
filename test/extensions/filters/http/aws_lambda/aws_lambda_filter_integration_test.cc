@@ -49,15 +49,15 @@ public:
 
   template <typename TMap>
   ABSL_MUST_USE_RESULT testing::AssertionResult compareMaps(const TMap& m1, const TMap& m2) {
-    for (auto&& kvp : m1) {
-      auto it = m2.find(kvp.first);
+    for (auto&& [key, exepected_result] : m1) {
+      auto it = m2.find(key);
       if (it == m2.end()) {
-        return AssertionFailure() << "Failed to find value: " << kvp.first;
+        return AssertionFailure() << "Failed to find value: " << key;
         ;
       }
-      if (it->second != kvp.second) {
-        return AssertionFailure() << "Values of key: " << kvp.first
-                                  << " are different. expected: " << kvp.second
+      if (it->second != exepected_result) {
+        return AssertionFailure() << "Values of key: " << key
+                                  << " are different. expected: " << exepected_result
                                   << " actual: " << it->second;
       }
     }

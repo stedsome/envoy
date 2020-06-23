@@ -45,10 +45,10 @@ TEST_F(AppExceptionTest, Encode) {
   EXPECT_EQ(app_exception.encode(*(metadata_.get()), protocol_, buffer),
             DubboFilters::DirectResponse::ResponseType::Exception);
   MessageMetadataSharedPtr metadata = std::make_shared<MessageMetadata>();
-  auto result = protocol_.decodeHeader(buffer, metadata);
-  EXPECT_TRUE(result.second);
+  auto [decode_result, decode_status] = protocol_.decodeHeader(buffer, metadata);
+  EXPECT_TRUE(decode_status);
 
-  const ContextImpl* context = static_cast<const ContextImpl*>(result.first.get());
+  const ContextImpl* context = static_cast<const ContextImpl*>(decode_result.get());
   EXPECT_EQ(expect_body_size, context->body_size());
   EXPECT_EQ(metadata->message_type(), MessageType::Response);
   buffer.drain(context->header_size());
@@ -64,9 +64,10 @@ TEST_F(AppExceptionTest, Encode) {
 
   EXPECT_EQ(buffer.length(), hessian_int_size + hessian_string_size);
 
-  auto rpc_result = protocol_.serializer()->deserializeRpcResult(buffer, result.first);
-  EXPECT_TRUE(rpc_result.second);
-  EXPECT_TRUE(rpc_result.first->hasException());
+  auto [rpc_result, rpc_status] =
+      protocol_.serializer()->deserializeRpcResult(buffer, decode_result);
+  EXPECT_TRUE(rpc_status);
+  EXPECT_TRUE(rpc_result->hasException());
   buffer.drain(buffer.length());
 
   AppException new_app_exception(app_exception);

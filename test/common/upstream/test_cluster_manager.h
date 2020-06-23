@@ -67,12 +67,12 @@ public:
             [&](const envoy::config::cluster::v3::Cluster& cluster, ClusterManager& cm,
                 Outlier::EventLoggerSharedPtr outlier_event_logger,
                 bool added_via_api) -> std::pair<ClusterSharedPtr, ThreadAwareLoadBalancer*> {
-              auto result = ClusterFactoryImplBase::create(
+              auto [new_cluster, load_balancer] = ClusterFactoryImplBase::create(
                   cluster, cm, stats_, tls_, dns_resolver_, ssl_context_manager_, runtime_, random_,
                   dispatcher_, log_manager_, local_info_, admin_, singleton_manager_,
                   outlier_event_logger, added_via_api, validation_visitor_, *api_);
               // Convert from load balancer unique_ptr -> raw pointer -> unique_ptr.
-              return std::make_pair(result.first, result.second.release());
+              return std::make_pair(new_cluster, load_balancer.release());
             }));
   }
 
@@ -95,8 +95,9 @@ public:
   clusterFromProto(const envoy::config::cluster::v3::Cluster& cluster, ClusterManager& cm,
                    Outlier::EventLoggerSharedPtr outlier_event_logger,
                    bool added_via_api) override {
-    auto result = clusterFromProto_(cluster, cm, outlier_event_logger, added_via_api);
-    return std::make_pair(result.first, ThreadAwareLoadBalancerPtr(result.second));
+    auto [new_cluster, load_balancer] =
+        clusterFromProto_(cluster, cm, outlier_event_logger, added_via_api);
+    return std::make_pair(new_cluster, ThreadAwareLoadBalancerPtr(load_balancer));
   }
 
   CdsApiPtr createCds(const envoy::config::core::v3::ConfigSource&, ClusterManager&) override {
@@ -171,8 +172,8 @@ public:
 
   std::map<std::string, std::reference_wrapper<Cluster>> activeClusters() {
     std::map<std::string, std::reference_wrapper<Cluster>> clusters;
-    for (auto& cluster : active_clusters_) {
-      clusters.emplace(cluster.first, *cluster.second->cluster_);
+    for (auto& [cluster_name, active_cluster] : active_clusters_) {
+      clusters.emplace(cluster_name, *active_cluster->cluster_);
     }
     return clusters;
   }

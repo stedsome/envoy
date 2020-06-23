@@ -16,9 +16,9 @@ namespace test {
 class QuicTestMemSliceVectorImpl {
 public:
   explicit QuicTestMemSliceVectorImpl(std::vector<std::pair<char*, size_t>> buffers) {
-    for (auto it : buffers) {
+    for (auto [buffer, buffer_size] : buffers) {
       auto fragment = new Envoy::Buffer::BufferFragmentImpl(
-          it.first, it.second,
+          buffer, buffer_size,
           [](const void*, size_t, const Envoy::Buffer::BufferFragmentImpl* fragment) {
             delete fragment;
           });

@@ -287,8 +287,8 @@ TEST_P(LocalJwksIntegrationTest, FilterStateRequirement) {
         {":scheme", "http"},
         {":authority", "host"},
     };
-    for (const auto& h : test.extra_headers) {
-      headers.addCopy(h.first, h.second);
+    for (const auto& [header_key, header_value] : test.extra_headers) {
+      headers.addCopy(header_key, header_value);
     }
     auto response = codec_client_->makeHeaderOnlyRequest(headers);
 

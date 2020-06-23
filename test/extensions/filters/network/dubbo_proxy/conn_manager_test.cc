@@ -363,9 +363,9 @@ TEST_F(ConnectionManagerTest, OnDataHandlesHeartbeatEvent) {
       .WillOnce(Invoke([&](Buffer::Instance& buffer, bool) -> void {
         ProtocolPtr protocol = conn_manager_->config().createProtocol();
         MessageMetadataSharedPtr metadata(std::make_shared<MessageMetadata>());
-        auto result = protocol->decodeHeader(buffer, metadata);
-        EXPECT_TRUE(result.second);
-        const DubboProxy::ContextImpl& ctx = *static_cast<const ContextImpl*>(result.first.get());
+        auto [decode_result, decode_status] = protocol->decodeHeader(buffer, metadata);
+        EXPECT_TRUE(decode_status);
+        const DubboProxy::ContextImpl& ctx = *static_cast<const ContextImpl*>(decode_result.get());
         EXPECT_TRUE(ctx.is_heartbeat());
         EXPECT_TRUE(metadata->hasResponseStatus());
         EXPECT_FALSE(metadata->is_two_way());

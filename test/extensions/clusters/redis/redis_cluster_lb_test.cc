@@ -54,11 +54,11 @@ public:
                               NetworkFilters::Common::Redis::Client::ReadPolicy::Master) {
 
     Upstream::LoadBalancerPtr lb = lb_->factory()->create();
-    for (auto& assignment : expected_assignments) {
-      TestLoadBalancerContext context(assignment.first, read_command, read_policy);
+    for (auto& [hash_key, host_index] : expected_assignments) {
+      TestLoadBalancerContext context(hash_key, read_command, read_policy);
       auto host = lb->chooseHost(&context);
       EXPECT_FALSE(host == nullptr);
-      EXPECT_EQ(hosts[assignment.second]->address()->asString(), host->address()->asString());
+      EXPECT_EQ(hosts[host_index]->address()->asString(), host->address()->asString());
     }
   }
 

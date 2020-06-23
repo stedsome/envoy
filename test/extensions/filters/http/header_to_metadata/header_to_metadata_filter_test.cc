@@ -29,8 +29,8 @@ namespace {
 MATCHER_P(MapEq, rhs, "") {
   const ProtobufWkt::Struct& obj = arg;
   EXPECT_TRUE(!rhs.empty());
-  for (auto const& entry : rhs) {
-    EXPECT_EQ(obj.fields().at(entry.first).string_value(), entry.second);
+  for (auto const& [field_key, field_value] : rhs) {
+    EXPECT_EQ(obj.fields().at(field_key).string_value(), field_value);
   }
   return true;
 }
@@ -38,8 +38,8 @@ MATCHER_P(MapEq, rhs, "") {
 MATCHER_P(MapEqNum, rhs, "") {
   const ProtobufWkt::Struct& obj = arg;
   EXPECT_TRUE(!rhs.empty());
-  for (auto const& entry : rhs) {
-    EXPECT_EQ(obj.fields().at(entry.first).number_value(), entry.second);
+  for (auto const& [field_key, field_value] : rhs) {
+    EXPECT_EQ(obj.fields().at(field_key).number_value(), field_value);
   }
   return true;
 }
@@ -47,8 +47,8 @@ MATCHER_P(MapEqNum, rhs, "") {
 MATCHER_P(MapEqValue, rhs, "") {
   const ProtobufWkt::Struct& obj = arg;
   EXPECT_TRUE(!rhs.empty());
-  for (auto const& entry : rhs) {
-    EXPECT_TRUE(TestUtility::protoEqual(obj.fields().at(entry.first), entry.second));
+  for (auto const& [field_key, field_value] : rhs) {
+    EXPECT_TRUE(TestUtility::protoEqual(obj.fields().at(field_key), field_value));
   }
   return true;
 }

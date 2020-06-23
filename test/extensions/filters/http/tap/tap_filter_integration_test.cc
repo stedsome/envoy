@@ -53,15 +53,15 @@ public:
       decoder = codec_client_->makeHeaderOnlyRequest(request_headers);
     } else {
       auto result = codec_client_->startRequest(request_headers);
+      auto request_encoder = &result.first;
       decoder = std::move(result.second);
-
       for (uint64_t index = 0; index < request_body_chunks.size(); index++) {
         Buffer::OwnedImpl data(request_body_chunks[index]);
-        result.first.encodeData(data, index == request_body_chunks.size() - 1 &&
-                                          request_trailers == nullptr);
+        request_encoder->encodeData(data, index == request_body_chunks.size() - 1 &&
+                                              request_trailers == nullptr);
       }
       if (request_trailers != nullptr) {
-        result.first.encodeTrailers(*request_trailers);
+        request_encoder->encodeTrailers(*request_trailers);
       }
     }
 

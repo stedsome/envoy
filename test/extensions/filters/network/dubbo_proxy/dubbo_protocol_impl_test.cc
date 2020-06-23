@@ -41,9 +41,8 @@ TEST(DubboProtocolImplTest, Normal) {
     addInt64(buffer, 1);
     addInt32(buffer, 1);
 
-    auto result = dubbo_protocol.decodeHeader(buffer, metadata);
-    auto context = result.first;
-    EXPECT_TRUE(result.second);
+    auto [context, decode_status] = dubbo_protocol.decodeHeader(buffer, metadata);
+    EXPECT_TRUE(decode_status);
     EXPECT_EQ(1, metadata->request_id());
     EXPECT_EQ(1, context->body_size());
     EXPECT_EQ(MessageType::Request, metadata->message_type());
@@ -56,9 +55,8 @@ TEST(DubboProtocolImplTest, Normal) {
     buffer.add(std::string({'\xda', '\xbb', 0x42, 20}));
     addInt64(buffer, 1);
     addInt32(buffer, 1);
-    auto result = dubbo_protocol.decodeHeader(buffer, metadata);
-    auto context = result.first;
-    EXPECT_TRUE(result.second);
+    auto [context, decode_status] = dubbo_protocol.decodeHeader(buffer, metadata);
+    EXPECT_TRUE(decode_status);
     EXPECT_EQ(1, metadata->request_id());
     EXPECT_EQ(1, context->body_size());
     EXPECT_EQ(MessageType::Response, metadata->message_type());
@@ -133,8 +131,8 @@ TEST(DubboProtocolImplTest, encode) {
   EXPECT_TRUE(dubbo_protocol.encode(buffer, metadata, content, RpcResponseType::ResponseWithValue));
 
   MessageMetadataSharedPtr output_metadata = std::make_shared<MessageMetadata>();
-  auto result = dubbo_protocol.decodeHeader(buffer, output_metadata);
-  EXPECT_TRUE(result.second);
+  auto [context, decode_status] = dubbo_protocol.decodeHeader(buffer, output_metadata);
+  EXPECT_TRUE(decode_status);
 
   EXPECT_EQ(metadata.message_type(), output_metadata->message_type());
   EXPECT_EQ(metadata.response_status(), output_metadata->response_status());
@@ -144,7 +142,6 @@ TEST(DubboProtocolImplTest, encode) {
   Buffer::OwnedImpl body_buffer;
   size_t serialized_body_size = dubbo_protocol.serializer()->serializeRpcResult(
       body_buffer, content, RpcResponseType::ResponseWithValue);
-  auto context = result.first;
   EXPECT_EQ(context->body_size(), serialized_body_size);
   EXPECT_EQ(false, context->hasAttachments());
   EXPECT_EQ(0, context->attachments().size());
@@ -213,9 +210,8 @@ TEST(DubboProtocolImplTest, decode) {
     buffer.add(std::string({'\xda', '\xbb', '\xc2', 0x00}));
     addInt64(buffer, 1);
     addInt32(buffer, 1);
-    auto result = dubbo_protocol.decodeHeader(buffer, metadata);
-    EXPECT_TRUE(result.second);
-    auto context = result.first;
+    auto [context, decode_status] = dubbo_protocol.decodeHeader(buffer, metadata);
+    EXPECT_TRUE(decode_status);
     EXPECT_EQ(1, context->body_size());
     EXPECT_EQ(MessageType::Request, metadata->message_type());
     EXPECT_EQ(1, metadata->request_id());
@@ -228,9 +224,8 @@ TEST(DubboProtocolImplTest, decode) {
     buffer.add(std::string({'\xda', '\xbb', '\x82', 0x00}));
     addInt64(buffer, 1);
     addInt32(buffer, 1);
-    auto result = dubbo_protocol.decodeHeader(buffer, metadata);
-    EXPECT_TRUE(result.second);
-    auto context = result.first;
+    auto [context, decode_status] = dubbo_protocol.decodeHeader(buffer, metadata);
+    EXPECT_TRUE(decode_status);
     EXPECT_EQ(1, context->body_size());
     EXPECT_EQ(MessageType::Oneway, metadata->message_type());
     EXPECT_EQ(1, metadata->request_id());
