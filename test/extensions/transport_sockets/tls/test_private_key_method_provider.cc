@@ -318,26 +318,27 @@ TestPrivateKeyMethodProvider::TestPrivateKeyMethodProvider(
 
   auto config = MessageUtil::anyConvert<ProtobufWkt::Struct>(typed_config);
 
-  for (auto& value_it : config.fields()) {
-    auto& value = value_it.second;
-    if (value_it.first == "private_key_file" &&
+  for (auto& [config_field_name, value] : config.fields()) {
+    if (config_field_name == "private_key_file" &&
         value.kind_case() == ProtobufWkt::Value::kStringValue) {
       private_key_path = value.string_value();
     }
-    if (value_it.first == "sync_mode" && value.kind_case() == ProtobufWkt::Value::kBoolValue) {
+    if (config_field_name == "sync_mode" && value.kind_case() == ProtobufWkt::Value::kBoolValue) {
       test_options_.sync_mode_ = value.bool_value();
     }
-    if (value_it.first == "crypto_error" && value.kind_case() == ProtobufWkt::Value::kBoolValue) {
+    if (config_field_name == "crypto_error" &&
+        value.kind_case() == ProtobufWkt::Value::kBoolValue) {
       test_options_.crypto_error_ = value.bool_value();
     }
-    if (value_it.first == "method_error" && value.kind_case() == ProtobufWkt::Value::kBoolValue) {
+    if (config_field_name == "method_error" &&
+        value.kind_case() == ProtobufWkt::Value::kBoolValue) {
       test_options_.method_error_ = value.bool_value();
     }
-    if (value_it.first == "async_method_error" &&
+    if (config_field_name == "async_method_error" &&
         value.kind_case() == ProtobufWkt::Value::kBoolValue) {
       test_options_.async_method_error_ = value.bool_value();
     }
-    if (value_it.first == "expected_operation" &&
+    if (config_field_name == "expected_operation" &&
         value.kind_case() == ProtobufWkt::Value::kStringValue) {
       if (value.string_value() == "decrypt") {
         test_options_.decrypt_expected_ = true;
@@ -345,7 +346,7 @@ TestPrivateKeyMethodProvider::TestPrivateKeyMethodProvider(
         test_options_.sign_expected_ = true;
       }
     }
-    if (value_it.first == "mode" && value.kind_case() == ProtobufWkt::Value::kStringValue) {
+    if (config_field_name == "mode" && value.kind_case() == ProtobufWkt::Value::kStringValue) {
       mode_ = value.string_value();
     }
   }

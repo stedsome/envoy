@@ -258,8 +258,8 @@ TEST_P(Http2MetadataIntegrationTest, ProxyMultipleMetadata) {
   response->waitForEndStream();
   ASSERT_TRUE(response->complete());
   for (int i = 0; i < size; i++) {
-    for (const auto& metadata : *multiple_vecs[i][0]) {
-      EXPECT_EQ(response->metadata_map().find(metadata.first)->second, metadata.second);
+    for (const auto& [metadata_key, metadata_value] : *multiple_vecs[i][0]) {
+      EXPECT_EQ(response->metadata_map().find(metadata_key)->second, metadata_value);
     }
   }
   EXPECT_EQ(response->metadata_map().size(), multiple_vecs.size());
@@ -436,9 +436,8 @@ TEST_P(Http2MetadataIntegrationTest, ProxySmallMetadataInRequest) {
   initialize();
   codec_client_ = makeHttpConnection(lookupPort("http"));
 
-  auto encoder_decoder = codec_client_->startRequest(default_request_headers_);
-  request_encoder_ = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
+  auto [encoder_ref, response] = codec_client_->startRequest(default_request_headers_);
+  request_encoder_ = &encoder_ref;
   Http::MetadataMap metadata_map = {{"key", "value"}};
   codec_client_->sendMetadata(*request_encoder_, metadata_map);
   codec_client_->sendData(*request_encoder_, 1, false);
@@ -465,9 +464,8 @@ TEST_P(Http2MetadataIntegrationTest, ProxyLargeMetadataInRequest) {
   initialize();
   codec_client_ = makeHttpConnection(lookupPort("http"));
 
-  auto encoder_decoder = codec_client_->startRequest(default_request_headers_);
-  request_encoder_ = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
+  auto [encoder_ref, response] = codec_client_->startRequest(default_request_headers_);
+  request_encoder_ = &encoder_ref;
   std::string value = std::string(80 * 1024, '1');
   Http::MetadataMap metadata_map = {{"key", value}};
   codec_client_->sendMetadata(*request_encoder_, metadata_map);
@@ -495,9 +493,8 @@ TEST_P(Http2MetadataIntegrationTest, RequestMetadataReachSizeLimit) {
   codec_client_ = makeHttpConnection(lookupPort("http"));
   fake_upstreams_[0]->set_allow_unexpected_disconnects(true);
 
-  auto encoder_decoder = codec_client_->startRequest(default_request_headers_);
-  request_encoder_ = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
+  auto [encoder_ref, response] = codec_client_->startRequest(default_request_headers_);
+  request_encoder_ = &encoder_ref;
   std::string value = std::string(10 * 1024, '1');
   Http::MetadataMap metadata_map = {{"key", value}};
   codec_client_->sendMetadata(*request_encoder_, metadata_map);
@@ -544,9 +541,9 @@ TEST_P(Http2MetadataIntegrationTest, ConsumeAndInsertRequestMetadata) {
   verifyExpectedMetadata(upstream_request_->metadata_map(), expected_metadata_keys);
 
   // Sends a headers only request with metadata. An empty data frame carries end_stream.
-  auto encoder_decoder = codec_client_->startRequest(default_request_headers_);
-  request_encoder_ = &encoder_decoder.first;
-  response = std::move(encoder_decoder.second);
+  auto [encoder_ref, response_ptr] = codec_client_->startRequest(default_request_headers_);
+  request_encoder_ = &encoder_ref;
+  response = std::move(response_ptr);
   Http::MetadataMap metadata_map = {{"consume", "consume"}};
   codec_client_->sendMetadata(*request_encoder_, metadata_map);
   codec_client_->sendData(*request_encoder_, 0, true);
@@ -566,9 +563,9 @@ TEST_P(Http2MetadataIntegrationTest, ConsumeAndInsertRequestMetadata) {
   EXPECT_EQ(true, upstream_request_->complete());
 
   // Sends headers, data, metadata and trailer.
-  auto encoder_decoder_2 = codec_client_->startRequest(default_request_headers_);
-  request_encoder_ = &encoder_decoder_2.first;
-  response = std::move(encoder_decoder_2.second);
+  auto [encoder_ref_2, response_ptr_2] = codec_client_->startRequest(default_request_headers_);
+  request_encoder_ = &encoder_ref_2;
+  response = std::move(response_ptr_2);
   codec_client_->sendData(*request_encoder_, 10, false);
   metadata_map = {{"consume", "consume"}};
   codec_client_->sendMetadata(*request_encoder_, metadata_map);
@@ -585,9 +582,9 @@ TEST_P(Http2MetadataIntegrationTest, ConsumeAndInsertRequestMetadata) {
 
   // Sends headers, large data, metadata. Large data triggers decodeData() multiple times, and each
   // time, a "data" metadata is added.
-  auto encoder_decoder_3 = codec_client_->startRequest(default_request_headers_);
-  request_encoder_ = &encoder_decoder_3.first;
-  response = std::move(encoder_decoder_3.second);
+  auto [encoder_ref_3, response_ptr_3] = codec_client_->startRequest(default_request_headers_);
+  request_encoder_ = &encoder_ref_3;
+  response = std::move(response_ptr_3);
   codec_client_->sendData(*request_encoder_, 100000, false);
   codec_client_->sendMetadata(*request_encoder_, metadata_map);
   codec_client_->sendData(*request_encoder_, 100000, true);
@@ -603,9 +600,9 @@ TEST_P(Http2MetadataIntegrationTest, ConsumeAndInsertRequestMetadata) {
   EXPECT_GE(upstream_request_->duplicated_metadata_key_count().find("metadata")->second, 3);
 
   // Sends multiple metadata.
-  auto encoder_decoder_4 = codec_client_->startRequest(default_request_headers_);
-  request_encoder_ = &encoder_decoder_4.first;
-  response = std::move(encoder_decoder_4.second);
+  auto [encoder_ref_4, response_ptr_4] = codec_client_->startRequest(default_request_headers_);
+  request_encoder_ = &encoder_ref_4;
+  response = std::move(response_ptr_4);
   metadata_map = {{"metadata1", "metadata1"}};
   codec_client_->sendMetadata(*request_encoder_, metadata_map);
   codec_client_->sendData(*request_encoder_, 10, false);
@@ -711,9 +708,8 @@ void Http2MetadataIntegrationTest::testRequestMetadataWithStopAllFilter() {
   // Sends multiple metadata.
   const size_t size = 10;
   default_request_headers_.addCopy("content_size", std::to_string(size));
-  auto encoder_decoder = codec_client_->startRequest(default_request_headers_);
-  request_encoder_ = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
+  auto [encoder_ref, response] = codec_client_->startRequest(default_request_headers_);
+  request_encoder_ = &encoder_ref;
   Http::MetadataMap metadata_map = {{"metadata1", "metadata1"}};
   codec_client_->sendMetadata(*request_encoder_, metadata_map);
   codec_client_->sendData(*request_encoder_, size, false);
@@ -851,10 +847,9 @@ TEST_P(Http2IntegrationTest, GoAway) {
   initialize();
 
   codec_client_ = makeHttpConnection(lookupPort("http"));
-  auto encoder_decoder = codec_client_->startRequest(Http::TestRequestHeaderMapImpl{
+  auto [encoder_ref, response] = codec_client_->startRequest(Http::TestRequestHeaderMapImpl{
       {":method", "GET"}, {":path", "/healthcheck"}, {":scheme", "http"}, {":authority", "host"}});
-  request_encoder_ = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
+  request_encoder_ = &encoder_ref;
   codec_client_->goAway();
   codec_client_->sendData(*request_encoder_, 0, true);
   response->waitForEndStream();
@@ -929,25 +924,23 @@ TEST_P(Http2IntegrationTest, IdleTimeoutWithSimultaneousRequests) {
   codec_client_ = makeHttpConnection(lookupPort("http"));
 
   // Start request 1
-  auto encoder_decoder =
+  auto [encoder_ref, response1] =
       codec_client_->startRequest(Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                                                  {":path", "/test/long/url"},
                                                                  {":scheme", "http"},
                                                                  {":authority", "host"}});
-  encoder1 = &encoder_decoder.first;
-  auto response1 = std::move(encoder_decoder.second);
+  encoder1 = &encoder_ref;
 
   ASSERT_TRUE(fake_upstreams_[0]->waitForHttpConnection(*dispatcher_, fake_upstream_connection1));
   ASSERT_TRUE(fake_upstream_connection1->waitForNewStream(*dispatcher_, upstream_request1));
 
   // Start request 2
-  auto encoder_decoder2 =
+  auto [encoder_ref_2, response2] =
       codec_client_->startRequest(Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                                                  {":path", "/test/long/url"},
                                                                  {":scheme", "http"},
                                                                  {":authority", "host"}});
-  encoder2 = &encoder_decoder2.first;
-  auto response2 = std::move(encoder_decoder2.second);
+  encoder2 = &encoder_ref_2;
   ASSERT_TRUE(fake_upstreams_[0]->waitForHttpConnection(*dispatcher_, fake_upstream_connection2));
   ASSERT_TRUE(fake_upstream_connection2->waitForNewStream(*dispatcher_, upstream_request2));
 
@@ -1049,25 +1042,23 @@ void Http2IntegrationTest::simultaneousRequest(int32_t request1_bytes, int32_t r
   codec_client_ = makeHttpConnection(lookupPort("http"));
 
   // Start request 1
-  auto encoder_decoder =
+  auto [encoder_ref, response1] =
       codec_client_->startRequest(Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                                                  {":path", "/test/long/url"},
                                                                  {":scheme", "http"},
                                                                  {":authority", "host"}});
-  encoder1 = &encoder_decoder.first;
-  auto response1 = std::move(encoder_decoder.second);
+  encoder1 = &encoder_ref;
 
   ASSERT_TRUE(fake_upstreams_[0]->waitForHttpConnection(*dispatcher_, fake_upstream_connection1));
   ASSERT_TRUE(fake_upstream_connection1->waitForNewStream(*dispatcher_, upstream_request1));
 
   // Start request 2
-  auto encoder_decoder2 =
+  auto [encoder_ref_2, response2] =
       codec_client_->startRequest(Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                                                  {":path", "/test/long/url"},
                                                                  {":scheme", "http"},
                                                                  {":authority", "host"}});
-  encoder2 = &encoder_decoder2.first;
-  auto response2 = std::move(encoder_decoder2.second);
+  encoder2 = &encoder_ref_2;
   ASSERT_TRUE(fake_upstreams_[0]->waitForHttpConnection(*dispatcher_, fake_upstream_connection2));
   ASSERT_TRUE(fake_upstream_connection2->waitForNewStream(*dispatcher_, upstream_request2));
 
@@ -1180,11 +1171,10 @@ TEST_P(Http2IntegrationTest, PauseAndResume) {
 
   // Send a request with a bit of data, to trigger the filter pausing.
   codec_client_ = makeHttpConnection(lookupPort("http"));
-  auto encoder_decoder = codec_client_->startRequest(default_request_headers_);
-  request_encoder_ = &encoder_decoder.first;
+  auto [encoder_ref, response] = codec_client_->startRequest(default_request_headers_);
+  request_encoder_ = &encoder_ref;
   codec_client_->sendData(*request_encoder_, 1, false);
 
-  auto response = std::move(encoder_decoder.second);
   ASSERT_TRUE(fake_upstreams_[0]->waitForHttpConnection(*dispatcher_, fake_upstream_connection_));
   ASSERT_TRUE(fake_upstream_connection_->waitForNewStream(*dispatcher_, upstream_request_));
   ASSERT_TRUE(upstream_request_->waitForHeadersComplete());
@@ -1280,9 +1270,9 @@ void Http2RingHashIntegrationTest::sendMultipleRequests(
 
   codec_client_ = makeHttpConnection(lookupPort("http"));
   for (uint32_t i = 0; i < num_requests; ++i) {
-    auto encoder_decoder = codec_client_->startRequest(headers);
-    encoders.push_back(&encoder_decoder.first);
-    responses.push_back(std::move(encoder_decoder.second));
+    auto [encoder_ref, response] = codec_client_->startRequest(headers);
+    encoders.push_back(&encoder_ref);
+    responses.push_back(std::move(response));
     codec_client_->sendData(*encoders[i], request_bytes, true);
   }
 

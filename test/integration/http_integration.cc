@@ -755,16 +755,14 @@ void HttpIntegrationTest::testGrpcRetry() {
                                                      {"grpc-status", "0"}};
   initialize();
   codec_client_ = makeHttpConnection(lookupPort("http"));
-  auto encoder_decoder = codec_client_->startRequest(
+  auto [request_encoder, response] = codec_client_->startRequest(
       Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                      {":path", "/test/long/url"},
                                      {":scheme", "http"},
                                      {":authority", "host"},
                                      {"x-forwarded-for", "10.0.0.1"},
                                      {"x-envoy-retry-grpc-on", "cancelled"}});
-  request_encoder_ = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
-  codec_client_->sendData(*request_encoder_, 1024, true);
+  codec_client_->sendData(request_encoder, 1024, true);
   waitForNextUpstreamRequest();
   upstream_request_->encodeHeaders(
       Http::TestResponseHeaderMapImpl{{":status", "200"}, {"grpc-status", "1"}}, false);
@@ -800,14 +798,13 @@ void HttpIntegrationTest::testEnvoyHandling100Continue(bool additional_continue_
   initialize();
   codec_client_ = makeHttpConnection(lookupPort("http"));
 
-  auto encoder_decoder =
+  auto [encoder_ref, response] =
       codec_client_->startRequest(Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                                                  {":path", "/dynamo/url"},
                                                                  {":scheme", "http"},
                                                                  {":authority", "host"},
                                                                  {"expect", "100-continue"}});
-  request_encoder_ = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
+  request_encoder_ = &encoder_ref;
   ASSERT_TRUE(fake_upstreams_[0]->waitForHttpConnection(*dispatcher_, fake_upstream_connection_));
   // The continue headers should arrive immediately.
   response->waitForContinueHeaders();
@@ -871,14 +868,13 @@ void HttpIntegrationTest::testEnvoyProxying100Continue(bool continue_before_upst
   initialize();
 
   codec_client_ = makeHttpConnection(lookupPort("http"));
-  auto encoder_decoder =
+  auto [encoder_ref, response] =
       codec_client_->startRequest(Http::TestRequestHeaderMapImpl{{":method", "GET"},
                                                                  {":path", "/dynamo/url"},
                                                                  {":scheme", "http"},
                                                                  {":authority", "host"},
                                                                  {"expect", "100-continue"}});
-  request_encoder_ = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
+  request_encoder_ = &encoder_ref;
 
   // Wait for the request headers to be received upstream.
   ASSERT_TRUE(fake_upstreams_[0]->waitForHttpConnection(*dispatcher_, fake_upstream_connection_));
@@ -1022,9 +1018,9 @@ void HttpIntegrationTest::testLargeRequestTrailers(uint32_t size, uint32_t max_s
   codec_client_ = makeHttpConnection(lookupPort("http"));
   fake_upstreams_[0]->set_allow_unexpected_disconnects(true);
 
-  auto encoder_decoder = codec_client_->startRequest(default_request_headers_);
-  request_encoder_ = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
+  auto [encoder_ref, response_ptr] = codec_client_->startRequest(default_request_headers_);
+  request_encoder_ = &encoder_ref;
+  auto response = std::move(response_ptr);
   codec_client_->sendData(*request_encoder_, 10, false);
   codec_client_->sendTrailers(*request_encoder_, request_trailers);
 
@@ -1086,15 +1082,14 @@ void HttpIntegrationTest::testDownstreamResetBeforeResponseComplete() {
   initialize();
   codec_client_ = makeHttpConnection(lookupPort("http"));
 
-  auto encoder_decoder =
+  auto [encoder_ref, response] =
       codec_client_->startRequest(Http::TestRequestHeaderMapImpl{{":method", "GET"},
                                                                  {":path", "/test/long/url"},
                                                                  {":scheme", "http"},
                                                                  {":authority", "host"},
                                                                  {"cookie", "a=b"},
                                                                  {"cookie", "c=d"}});
-  request_encoder_ = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
+  request_encoder_ = &encoder_ref;
   codec_client_->sendData(*request_encoder_, 0, true);
   waitForNextUpstreamRequest();
 
@@ -1133,13 +1128,12 @@ void HttpIntegrationTest::testTrailers(uint64_t request_size, uint64_t response_
 
   initialize();
   codec_client_ = makeHttpConnection(lookupPort("http"));
-  auto encoder_decoder =
+  auto [encoder_ref, response] =
       codec_client_->startRequest(Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                                                  {":path", "/test/long/url"},
                                                                  {":scheme", "http"},
                                                                  {":authority", "host"}});
-  request_encoder_ = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
+  request_encoder_ = &encoder_ref;
   codec_client_->sendData(*request_encoder_, request_size, false);
   codec_client_->sendTrailers(*request_encoder_, request_trailers);
   waitForNextUpstreamRequest();
@@ -1225,9 +1219,9 @@ void HttpIntegrationTest::testMaxStreamDuration() {
   fake_upstreams_[0]->set_allow_unexpected_disconnects(true);
   codec_client_ = makeHttpConnection(lookupPort("http"));
 
-  auto encoder_decoder = codec_client_->startRequest(default_request_headers_);
-  request_encoder_ = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
+  auto [encoder_ref, response_ptr] = codec_client_->startRequest(default_request_headers_);
+  request_encoder_ = &encoder_ref;
+  auto response = std::move(response_ptr);
 
   ASSERT_TRUE(fake_upstreams_[0]->waitForHttpConnection(*dispatcher_, fake_upstream_connection_));
   ASSERT_TRUE(fake_upstream_connection_->waitForNewStream(*dispatcher_, upstream_request_));
@@ -1258,9 +1252,9 @@ void HttpIntegrationTest::testMaxStreamDurationWithRetry(bool invoke_retry_upstr
   fake_upstreams_[0]->set_allow_unexpected_disconnects(true);
   codec_client_ = makeHttpConnection(lookupPort("http"));
 
-  auto encoder_decoder = codec_client_->startRequest(retriable_header);
-  request_encoder_ = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
+  auto [encoder_ref, response_ptr] = codec_client_->startRequest(retriable_header);
+  request_encoder_ = &encoder_ref;
+  auto response = std::move(response_ptr);
 
   ASSERT_TRUE(fake_upstreams_[0]->waitForHttpConnection(*dispatcher_, fake_upstream_connection_));
   ASSERT_TRUE(fake_upstream_connection_->waitForNewStream(*dispatcher_, upstream_request_));

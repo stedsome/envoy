@@ -323,8 +323,8 @@ bool TestUtility::gaugesZeroed(
   // Returns true if all gauges are 0 except the circuit_breaker remaining resource
   // gauges which default to the resource max.
   std::regex omitted(".*circuit_breakers\\..*\\.remaining.*");
-  for (const auto& gauge : gauges) {
-    if (!std::regex_match(std::string(gauge.first), omitted) && gauge.second.get().value() != 0) {
+  for (const auto& [gauge_name, gauge] : gauges) {
+    if (!std::regex_match(std::string(gauge_name), omitted) && gauge.get().value() != 0) {
       return false;
     }
   }

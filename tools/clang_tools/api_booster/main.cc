@@ -53,12 +53,12 @@ public:
   void run(const clang::ast_matchers::MatchFinder::MatchResult& match_result) override {
     clang::SourceManager& source_manager = match_result.Context->getSourceManager();
     DEBUG_LOG("AST match callback dispatcher");
-    for (const auto it : match_result.Nodes.getMap()) {
-      const std::string match_text = getSourceText(it.second.getSourceRange(), source_manager);
+    for (const auto [name, result] : match_result.Nodes.getMap()) {
+      const std::string match_text = getSourceText(result.getSourceRange(), source_manager);
       const clang::SourceRange spelling_range =
-          getSpellingRange(it.second.getSourceRange(), source_manager);
+          getSpellingRange(result.getSourceRange(), source_manager);
       const std::string spelling_text = getSourceText(spelling_range, source_manager);
-      DEBUG_LOG(absl::StrCat("  Result for ", it.first, " [", truncateForDebug(match_text), "]"));
+      DEBUG_LOG(absl::StrCat("  Result for ", name, " [", truncateForDebug(match_text), "]"));
       if (match_text != spelling_text) {
         DEBUG_LOG(absl::StrCat("    with spelling text [", truncateForDebug(spelling_text), "]"));
       }
@@ -435,13 +435,13 @@ private:
     const clang::SourceLocation spelling_begin =
         source_manager.getSpellingLoc(source_range.getBegin());
     const clang::SourceLocation spelling_end = source_manager.getSpellingLoc(source_range.getEnd());
-    std::pair<clang::FileID, unsigned> start = source_manager.getDecomposedLoc(spelling_begin);
-    std::pair<clang::FileID, unsigned> end = source_manager.getDecomposedLoc(spelling_end);
-    if (start.first != end.first) {
+    auto [start_file_id, start_length] = source_manager.getDecomposedLoc(spelling_begin);
+    auto [end_file_id, end_length] = source_manager.getDecomposedLoc(spelling_end);
+    if (start_file_id != end_file_id) {
       return -1;
     }
-    end.second += clang::Lexer::MeasureTokenLength(spelling_end, source_manager, lexer_lopt_);
-    return end.second - start.second;
+    end_length += clang::Lexer::MeasureTokenLength(spelling_end, source_manager, lexer_lopt_);
+    return end_length - start_length;
   }
 
   std::string getSourceText(clang::SourceLocation begin_loc, int size,
@@ -573,12 +573,12 @@ int main(int argc, const char** argv) {
 
   // Serialize replacements to <main source file path>.clang-replacements.yaml.
   // These are suitable for consuming by clang-apply-replacements.
-  for (const auto& file_replacement : tool.getReplacements()) {
+  for (const auto& [file, replacement] : tool.getReplacements()) {
     // Populate TranslationUnitReplacements from file replacements (this is what
     // there exists llvm::yaml serialization support for).
     clang::tooling::TranslationUnitReplacements tu_replacements;
-    tu_replacements.MainSourceFile = file_replacement.first;
-    for (const auto& r : file_replacement.second) {
+    tu_replacements.MainSourceFile = file;
+    for (const auto& r : replacement) {
       tu_replacements.Replacements.push_back(r);
       DEBUG_LOG(r.toString());
     }

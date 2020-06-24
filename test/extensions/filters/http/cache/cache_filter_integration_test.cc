@@ -108,9 +108,8 @@ TEST_P(CacheIntegrationTest, GetRequestWithBodyAndTrailers) {
                                                       {"content-length", "42"}};
 
   for (int i = 0; i < 2; ++i) {
-    auto encoder_decoder = codec_client_->startRequest(request_headers);
-    request_encoder_ = &encoder_decoder.first;
-    auto response = std::move(encoder_decoder.second);
+    auto [encoder_decoder_ref, response] = codec_client_->startRequest(request_headers);
+    request_encoder_ = &encoder_decoder_ref;
     codec_client_->sendData(*request_encoder_, 13, false);
     codec_client_->sendTrailers(*request_encoder_, request_trailers);
     waitForNextUpstreamRequest();

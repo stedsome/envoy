@@ -37,9 +37,9 @@ public:
 
   void setUpConnection() {
     codec_client_ = makeHttpConnection(lookupPort("http"));
-    auto encoder_decoder = codec_client_->startRequest(connect_headers_);
-    request_encoder_ = &encoder_decoder.first;
-    response_ = std::move(encoder_decoder.second);
+    auto [encoder_ref, response_ptr] = codec_client_->startRequest(connect_headers_);
+    request_encoder_ = &encoder_ref;
+    response_ = std::move(response_ptr);
     ASSERT_TRUE(fake_upstreams_[0]->waitForRawConnection(fake_raw_upstream_connection_));
     response_->waitForHeaders();
   }
@@ -211,9 +211,9 @@ TEST_P(ProxyingConnectIntegrationTest, ProxyConnect) {
 
   // Send request headers.
   codec_client_ = makeHttpConnection(lookupPort("http"));
-  auto encoder_decoder = codec_client_->startRequest(connect_headers_);
-  request_encoder_ = &encoder_decoder.first;
-  response_ = std::move(encoder_decoder.second);
+  auto [encoder_ref, response_ptr] = codec_client_->startRequest(connect_headers_);
+  request_encoder_ = &encoder_ref;
+  response_ = std::move(response_ptr);
 
   // Wait for them to arrive upstream.
   AssertionResult result =

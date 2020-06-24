@@ -25,8 +25,8 @@ public:
   }
 
   void setHistogramValuesWithCounts(const std::vector<std::pair<uint64_t, uint64_t>>& values) {
-    for (std::pair<uint64_t, uint64_t> cv : values) {
-      hist_insert_intscale(histogram_, cv.first, 0, cv.second);
+    for (auto [value, count] : values) {
+      hist_insert_intscale(histogram_, value, 0, count);
     }
   }
 
@@ -77,9 +77,9 @@ protected:
   // tags, a copy of the previous metric will be returned.
   std::string baseName(const std::string& name, Stats::StatNameTagVector cluster_tags) {
     std::string result = name;
-    for (const auto& name_tag : cluster_tags) {
-      result.append(fmt::format("<{}:{}>", symbol_table_->toString(name_tag.first),
-                                symbol_table_->toString(name_tag.second)));
+    for (const auto& [tag_name, tag_value] : cluster_tags) {
+      result.append(fmt::format("<{}:{}>", symbol_table_->toString(tag_name),
+                                symbol_table_->toString(tag_value)));
     }
     return result;
   }

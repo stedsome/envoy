@@ -103,8 +103,9 @@ using ExpectedLogMessages = std::vector<StringPair>;
       const auto log_message =                                                                     \
           std::find_if(log_recorder.messages().begin(), log_recorder.messages().end(),             \
                        [&expected](const std::string& message) {                                   \
-                         return (message.find(expected.second) != std::string::npos) &&            \
-                                (message.find(expected.first) != std::string::npos);               \
+                         auto& [expected_key, expected_value] = expected;                          \
+                         return (message.find(expected_value) != std::string::npos) &&             \
+                                (message.find(expected_key) != std::string::npos);                 \
                        });                                                                         \
       if (log_message == log_recorder.messages().end()) {                                          \
         failed_expectations.push_back(expected);                                                   \
@@ -114,8 +115,8 @@ using ExpectedLogMessages = std::vector<StringPair>;
       std::string failed_message;                                                                  \
       absl::StrAppend(&failed_message, "\nLogs:\n ", absl::StrJoin(log_recorder.messages(), " "),  \
                       "\n Do NOT contain:\n");                                                     \
-      for (const auto& expectation : failed_expectations) {                                        \
-        absl::StrAppend(&failed_message, "  '", expectation.first, "', '", expectation.second,     \
+      for (const auto& [expectation_key, expectation_value] : failed_expectations) {               \
+        absl::StrAppend(&failed_message, "  '", expectation_key, "', '", expectation_value,        \
                         "'\n");                                                                    \
       }                                                                                            \
       FAIL() << failed_message;                                                                    \

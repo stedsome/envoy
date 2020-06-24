@@ -400,9 +400,9 @@ void testUtil(const TestUtilOptions& options) {
                   server_connection->ssl()->urlEncodedPemEncodedPeerCertificateChain());
       }
 
-      for (const auto& expected_extension : options.expectedX509Extensions()) {
-        const auto& result = server_connection->ssl()->x509Extension(expected_extension.first);
-        EXPECT_EQ(expected_extension.second, result);
+      for (const auto& [test_input, expected_result] : options.expectedX509Extensions()) {
+        const auto& result = server_connection->ssl()->x509Extension(test_input);
+        EXPECT_EQ(expected_result, result);
       }
       // By default, the session is not created with session resumption. The
       // client should see a session ID but the server should not.

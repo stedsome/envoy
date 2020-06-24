@@ -122,10 +122,10 @@ public:
     tag_pool_.clear();
     tag_names_and_values_.clear();
     tags_.clear();
-    for (const StatNameTag& tag : tags) {
-      tag_names_and_values_.push_back(tag.first);
-      tag_names_and_values_.push_back(tag.second);
-      tags_.push_back(Tag{symbol_table_->toString(tag.first), symbol_table_->toString(tag.second)});
+    for (const auto& [tag_name, tag_value] : tags) {
+      tag_names_and_values_.push_back(tag_name);
+      tag_names_and_values_.push_back(tag_value);
+      tags_.push_back(Tag{symbol_table_->toString(tag_name), symbol_table_->toString(tag_value)});
     }
   }
 

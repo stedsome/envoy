@@ -35,9 +35,9 @@ TEST_P(NetworkUtilityTest, DISABLED_ValidateBindFreeLoopbackPort) {
   std::map<std::string, size_t> seen;
   const size_t kLimit = 50;
   for (size_t n = 0; n < kLimit; ++n) {
-    auto addr_fd = Network::Test::bindFreeLoopbackPort(version_, Socket::Type::Stream);
-    addr_fd.second->close();
-    auto addr = addr_fd.first->asString();
+    auto [address, fd] = Network::Test::bindFreeLoopbackPort(version_, Socket::Type::Stream);
+    fd->close();
+    auto addr = address->asString();
     auto search = seen.find(addr);
     if (search != seen.end()) {
       ADD_FAILURE() << "Saw duplicate binds for address " << addr << " at steps " << n << " and "

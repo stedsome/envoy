@@ -182,9 +182,7 @@ typed_config:
                                                  {":authority", "host"},
                                                  {"x-forwarded-for", "10.0.0.1"}};
 
-  auto encoder_decoder = codec_client_->startRequest(request_headers);
-  Http::StreamEncoder& encoder = encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
+  auto [encoder, response] = codec_client_->startRequest(request_headers);
   Buffer::OwnedImpl request_data1("hello");
   encoder.encodeData(request_data1, false);
   Buffer::OwnedImpl request_data2("world");
