@@ -139,9 +139,9 @@ void WebsocketIntegrationTest::performUpgrade(
   codec_client_ = makeHttpConnection(lookupPort("http"));
 
   // Send websocket upgrade request
-  auto encoder_decoder = codec_client_->startRequest(upgrade_request_headers);
-  request_encoder_ = &encoder_decoder.first;
-  response_ = std::move(encoder_decoder.second);
+  auto [encoder_ref, repsponse_ptr] = codec_client_->startRequest(upgrade_request_headers);
+  request_encoder_ = &encoder_ref;
+  response_ = std::move(repsponse_ptr);
   test_server_->waitForCounterGe("http.config_test.downstream_cx_upgrades_total", 1);
   test_server_->waitForGaugeGe("http.config_test.downstream_cx_upgrades_active", 1);
 
@@ -226,10 +226,10 @@ TEST_P(WebsocketIntegrationTest, EarlyData) {
   const std::string early_data_resp_str = "world";
 
   // Send websocket upgrade request with early data.
-  auto encoder_decoder =
+  auto [encoder_ref, response_ptr] =
       codec_client_->startRequest(upgradeRequestHeaders("websocket", early_data_req_str.size()));
-  request_encoder_ = &encoder_decoder.first;
-  response_ = std::move(encoder_decoder.second);
+  request_encoder_ = &encoder_ref;
+  response_ = std::move(response_ptr);
   codec_client_->sendData(*request_encoder_, early_data_req_str, false);
 
   // Wait for both the upgrade, and the early data.
@@ -362,9 +362,10 @@ TEST_P(WebsocketIntegrationTest, WebsocketCustomFilterChain) {
   const std::string large_req_str(2048, 'a');
   {
     codec_client_ = makeHttpConnection(lookupPort("http"));
-    auto encoder_decoder = codec_client_->startRequest(upgradeRequestHeaders("websocket"));
-    response_ = std::move(encoder_decoder.second);
-    codec_client_->sendData(encoder_decoder.first, large_req_str, false);
+    auto [encoder_ref, response_ptr] =
+        codec_client_->startRequest(upgradeRequestHeaders("websocket"));
+    response_ = std::move(response_ptr);
+    codec_client_->sendData(encoder_ref, large_req_str, false);
     response_->waitForEndStream();
     EXPECT_EQ("413", response_->headers().getStatusValue());
     waitForClientDisconnectOrReset();
@@ -379,9 +380,9 @@ TEST_P(WebsocketIntegrationTest, WebsocketCustomFilterChain) {
                                                    {":authority", "host"},
                                                    {":scheme", "https"}};
     codec_client_ = makeHttpConnection(lookupPort("http"));
-    auto encoder_decoder = codec_client_->startRequest(request_headers);
-    response_ = std::move(encoder_decoder.second);
-    codec_client_->sendData(encoder_decoder.first, large_req_str, false);
+    auto [encoder_ref, response_ptr] = codec_client_->startRequest(request_headers);
+    response_ = std::move(response_ptr);
+    codec_client_->sendData(encoder_ref, large_req_str, false);
     response_->waitForEndStream();
     EXPECT_EQ("413", response_->headers().getStatusValue());
     waitForClientDisconnectOrReset();

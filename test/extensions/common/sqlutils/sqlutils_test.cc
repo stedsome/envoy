@@ -58,9 +58,8 @@ TEST_P(MetadataFromSQLTest, ParsingAndMetadataTest) {
     ASSERT_EQ(expected_tables.size(), fields.size());
     for (const auto& i : fields) {
       // Get from created metadata the list of operations on the resource
-      const auto& operations = i;
-      std::string table_name = operations.first;
-
+      std::string table_name = i.first;
+      auto& table_list = i.second;
       std::transform(table_name.begin(), table_name.end(), table_name.begin(),
                      [](unsigned char c) { return std::tolower(c); });
       // Get the list of expected operations on the same resource from test param.
@@ -69,10 +68,10 @@ TEST_P(MetadataFromSQLTest, ParsingAndMetadataTest) {
       ASSERT_NE(expected_tables.end(), table_name_it);
       auto& operations_list = table_name_it->second;
       // The number of expected operations and created in metadata must be the same.
-      ASSERT_EQ(operations_list.size(), operations.second.list_value().values().size());
+      ASSERT_EQ(operations_list.size(), table_list.list_value().values().size());
       // Now iterate over the operations list found in metadata and check if the same operation
       // is listed as expected in test param.
-      for (const auto& j : operations.second.list_value().values()) {
+      for (const auto& j : table_list.list_value().values()) {
         // Find that operation in test params.
         const auto operation_it =
             std::find(operations_list.begin(), operations_list.end(), j.string_value());

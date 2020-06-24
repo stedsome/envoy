@@ -35,14 +35,13 @@ TEST_P(GrpcWebFilterIntegrationTest, GRPCWebTrailersNotDuplicated) {
 
   initialize();
   codec_client_ = makeHttpConnection(lookupPort("http"));
-  auto encoder_decoder = codec_client_->startRequest(
+  auto [encoder_decoder_ref, response] = codec_client_->startRequest(
       Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                      {":path", "/test/long/url"},
                                      {":scheme", "http"},
                                      {"content-type", "application/grpc-web"},
                                      {":authority", "host"}});
-  request_encoder_ = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
+  request_encoder_ = &encoder_decoder_ref;
   codec_client_->sendData(*request_encoder_, 1, false);
   codec_client_->sendTrailers(*request_encoder_, request_trailers);
   waitForNextUpstreamRequest();

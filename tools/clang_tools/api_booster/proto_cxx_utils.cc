@@ -43,19 +43,19 @@ ProtoCxxUtils::renameMethod(absl::string_view method_name,
                             const std::unordered_map<std::string, std::string> renames) {
   // Simple O(N * M) match, where M is constant (the set of prefixes/suffixes) so
   // should be fine.
-  for (const auto field_rename : renames) {
+  for (const auto [name, rename] : renames) {
     const std::vector<std::string> GeneratedMethodPrefixes = {
         "clear_", "set_", "has_", "mutable_", "set_allocated_", "release_", "add_", "",
     };
     // Most of the generated methods are some prefix.
     for (const std::string& prefix : GeneratedMethodPrefixes) {
-      if (method_name == prefix + field_rename.first) {
-        return prefix + field_rename.second;
+      if (method_name == prefix + name) {
+        return prefix + rename;
       }
     }
     // _size is the only suffix.
-    if (method_name == field_rename.first + "_size") {
-      return field_rename.second + "_size";
+    if (method_name == name + "_size") {
+      return rename + "_size";
     }
   }
   return {};

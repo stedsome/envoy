@@ -44,10 +44,9 @@ TEST_P(BufferIntegrationTest, RouterRequestPopulateContentLength) {
   initialize();
 
   codec_client_ = makeHttpConnection(lookupPort("http"));
-  auto encoder_decoder = codec_client_->startRequest(Http::TestRequestHeaderMapImpl{
+  auto [request_encoder_ref, response] = codec_client_->startRequest(Http::TestRequestHeaderMapImpl{
       {":method", "POST"}, {":scheme", "http"}, {":path", "/shelf"}, {":authority", "host"}});
-  request_encoder_ = &encoder_decoder.first;
-  IntegrationStreamDecoderPtr response = std::move(encoder_decoder.second);
+  request_encoder_ = &request_encoder_ref;
   codec_client_->sendData(*request_encoder_, "123", false);
   codec_client_->sendData(*request_encoder_, "456", false);
   codec_client_->sendData(*request_encoder_, "789", true);
@@ -71,10 +70,10 @@ TEST_P(BufferIntegrationTest, RouterRequestPopulateContentLengthOnTrailers) {
   initialize();
 
   codec_client_ = makeHttpConnection(lookupPort("http"));
-  auto encoder_decoder = codec_client_->startRequest(Http::TestRequestHeaderMapImpl{
-      {":method", "POST"}, {":scheme", "http"}, {":path", "/shelf"}, {":authority", "host"}});
-  request_encoder_ = &encoder_decoder.first;
-  IntegrationStreamDecoderPtr response = std::move(encoder_decoder.second);
+  const auto [request_encoder_ref, response] =
+      codec_client_->startRequest(Http::TestRequestHeaderMapImpl{
+          {":method", "POST"}, {":scheme", "http"}, {":path", "/shelf"}, {":authority", "host"}});
+  request_encoder_ = &request_encoder_ref;
   codec_client_->sendData(*request_encoder_, "0123", false);
   codec_client_->sendData(*request_encoder_, "456", false);
   codec_client_->sendData(*request_encoder_, "789", false);

@@ -52,9 +52,9 @@ public:
     if (request_trailers == nullptr && request_body_chunks.empty()) {
       decoder = codec_client_->makeHeaderOnlyRequest(request_headers);
     } else {
-      auto result = codec_client_->startRequest(request_headers);
-      auto request_encoder = &result.first;
-      decoder = std::move(result.second);
+      auto [encoder_ref, decoder_ptr] = codec_client_->startRequest(request_headers);
+      auto request_encoder = &encoder_ref;
+      decoder = std::move(decoder_ptr);
       for (uint64_t index = 0; index < request_body_chunks.size(); index++) {
         Buffer::OwnedImpl data(request_body_chunks[index]);
         request_encoder->encodeData(data, index == request_body_chunks.size() - 1 &&

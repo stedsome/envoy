@@ -513,12 +513,11 @@ TEST_P(SslTapIntegrationTest, TruncationWithMultipleDataFrames) {
   codec_client_ = makeHttpConnection(creator());
   const Http::TestRequestHeaderMapImpl request_headers{
       {":method", "GET"}, {":path", "/test/long/url"}, {":scheme", "http"}, {":authority", "host"}};
-  auto result = codec_client_->startRequest(request_headers);
-  auto decoder = std::move(result.second);
+  auto [encoder, decoder] = codec_client_->startRequest(request_headers);
   Buffer::OwnedImpl data1("one");
-  result.first.encodeData(data1, false);
+  encoder.encodeData(data1, false);
   Buffer::OwnedImpl data2("two");
-  result.first.encodeData(data2, true);
+  encoder.encodeData(data2, true);
   waitForNextUpstreamRequest();
   const Http::TestResponseHeaderMapImpl response_headers{{":status", "200"}};
   upstream_request_->encodeHeaders(response_headers, false);

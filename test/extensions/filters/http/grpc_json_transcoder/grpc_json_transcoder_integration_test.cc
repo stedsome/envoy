@@ -55,9 +55,9 @@ protected:
 
     IntegrationStreamDecoderPtr response;
     if (!request_body.empty()) {
-      auto encoder_decoder = codec_client_->startRequest(request_headers);
-      request_encoder_ = &encoder_decoder.first;
-      response = std::move(encoder_decoder.second);
+      auto [encoder_decoder_ref, response_ref] = codec_client_->startRequest(request_headers);
+      response = std::move(response_ref);
+      request_encoder_ = &encoder_decoder_ref;
       Buffer::OwnedImpl body(request_body);
       codec_client_->sendData(*request_encoder_, body, true);
     } else {

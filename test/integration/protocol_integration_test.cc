@@ -376,15 +376,13 @@ TEST_P(ProtocolIntegrationTest, Retry) {
 TEST_P(ProtocolIntegrationTest, RetryStreaming) {
   initialize();
   codec_client_ = makeHttpConnection(lookupPort("http"));
-  auto encoder_decoder =
+  auto [encoder, response] =
       codec_client_->startRequest(Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                                                  {":path", "/test/long/url"},
                                                                  {":scheme", "http"},
                                                                  {":authority", "host"},
                                                                  {"x-forwarded-for", "10.0.0.1"},
                                                                  {"x-envoy-retry-on", "5xx"}});
-  auto& encoder = encoder_decoder.first;
-  auto& response = encoder_decoder.second;
 
   // Send some data, but not the entire body.
   std::string data(1024, 'a');
@@ -433,15 +431,13 @@ TEST_P(ProtocolIntegrationTest, RetryStreaming) {
 TEST_P(ProtocolIntegrationTest, RetryStreamingReset) {
   initialize();
   codec_client_ = makeHttpConnection(lookupPort("http"));
-  auto encoder_decoder =
+  auto [encoder, response] =
       codec_client_->startRequest(Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                                                  {":path", "/test/long/url"},
                                                                  {":scheme", "http"},
                                                                  {":authority", "host"},
                                                                  {"x-forwarded-for", "10.0.0.1"},
                                                                  {"x-envoy-retry-on", "5xx"}});
-  auto& encoder = encoder_decoder.first;
-  auto& response = encoder_decoder.second;
 
   // Send some data, but not the entire body.
   std::string data(1024, 'a');
@@ -506,15 +502,13 @@ TEST_P(ProtocolIntegrationTest, RetryStreamingCancelDueToBufferOverflow) {
   initialize();
 
   codec_client_ = makeHttpConnection(lookupPort("http"));
-  auto encoder_decoder =
+  auto [encoder, response] =
       codec_client_->startRequest(Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                                                  {":path", "/test/long/url"},
                                                                  {":scheme", "http"},
                                                                  {":authority", "host"},
                                                                  {"x-forwarded-for", "10.0.0.1"},
                                                                  {"x-envoy-retry-on", "5xx"}});
-  auto& encoder = encoder_decoder.first;
-  auto& response = encoder_decoder.second;
 
   // Send some data, but less than the buffer limit, and not end-stream
   std::string data(64, 'a');
@@ -825,9 +819,8 @@ TEST_P(ProtocolIntegrationTest, HittingEncoderFilterLimit) {
 
   // Send the request.
   codec_client_ = makeHttpConnection(lookupPort("http"));
-  auto encoder_decoder = codec_client_->startRequest(default_request_headers_);
-  auto downstream_request = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
+  auto [encoder_ref, response] = codec_client_->startRequest(default_request_headers_);
+  auto downstream_request = &encoder_ref;
   Buffer::OwnedImpl data("HTTP body content goes here");
   codec_client_->sendData(*downstream_request, data, true);
   waitForNextUpstreamRequest();
@@ -1322,13 +1315,12 @@ name: decode-headers-only
 
   // First send the request headers. The filter should turn this into a header-only
   // request.
-  auto encoder_decoder =
+  auto [encoder_ref, response] =
       codec_client_->startRequest(Http::TestRequestHeaderMapImpl{{":method", "GET"},
                                                                  {":path", "/test/long/url"},
                                                                  {":scheme", "http"},
                                                                  {":authority", "host"}});
-  request_encoder_ = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
+  request_encoder_ = &encoder_ref;
 
   // Wait for the upstream request and begin sending a response with end_stream = false.
   waitForNextUpstreamRequest();
@@ -1379,9 +1371,8 @@ TEST_P(DownstreamProtocolIntegrationTest, ManyRequestTrailersRejected) {
   initialize();
   codec_client_ = makeHttpConnection(lookupPort("http"));
   fake_upstreams_[0]->set_allow_unexpected_disconnects(true);
-  auto encoder_decoder = codec_client_->startRequest(default_request_headers_);
-  request_encoder_ = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
+  auto [encoder_ref, response] = codec_client_->startRequest(default_request_headers_);
+  request_encoder_ = &encoder_ref;
   codec_client_->sendData(*request_encoder_, 1, false);
   codec_client_->sendTrailers(*request_encoder_, request_trailers);
 
@@ -1413,9 +1404,8 @@ TEST_P(DownstreamProtocolIntegrationTest, ManyRequestTrailersAccepted) {
 
   initialize();
   codec_client_ = makeHttpConnection(lookupPort("http"));
-  auto encoder_decoder = codec_client_->startRequest(default_request_headers_);
-  request_encoder_ = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
+  auto [encoder_ref, response] = codec_client_->startRequest(default_request_headers_);
+  request_encoder_ = &encoder_ref;
   codec_client_->sendData(*request_encoder_, 1, false);
   codec_client_->sendTrailers(*request_encoder_, request_trailers);
   waitForNextUpstreamRequest();
@@ -1464,13 +1454,12 @@ TEST_P(DownstreamProtocolIntegrationTest, ManyTrailerHeaders) {
 
   initialize();
   codec_client_ = makeHttpConnection(lookupPort("http"));
-  auto encoder_decoder =
+  auto [encoder_ref, response] =
       codec_client_->startRequest(Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                                                  {":path", "/test/long/url"},
                                                                  {":scheme", "http"},
                                                                  {":authority", "host"}});
-  request_encoder_ = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
+  request_encoder_ = &encoder_ref;
   codec_client_->sendTrailers(*request_encoder_, *request_trailers);
   waitForNextUpstreamRequest();
   upstream_request_->encodeHeaders(default_response_headers_, true);
@@ -1506,9 +1495,8 @@ TEST_P(ProtocolIntegrationTest, LargeRequestMethod) {
   codec_client_ = makeHttpConnection(lookupPort("http"));
 
   if (downstreamProtocol() == Http::CodecClient::Type::HTTP1) {
-    auto encoder_decoder = codec_client_->startRequest(request_headers);
-    request_encoder_ = &encoder_decoder.first;
-    auto response = std::move(encoder_decoder.second);
+    auto [encoder_ref, response] = codec_client_->startRequest(request_headers);
+    request_encoder_ = &encoder_ref;
     ASSERT_TRUE(codec_client_->waitForDisconnect());
     EXPECT_TRUE(response->complete());
     EXPECT_EQ("400", response->headers().getStatusValue());
@@ -1548,9 +1536,8 @@ name: passthrough-filter
 
   // Sends a request with headers and data.
   changeHeadersForStopAllTests(default_request_headers_, false);
-  auto encoder_decoder = codec_client_->startRequest(default_request_headers_);
-  request_encoder_ = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
+  auto [encoder_ref, response] = codec_client_->startRequest(default_request_headers_);
+  request_encoder_ = &encoder_ref;
   for (int i = 0; i < count_ - 1; i++) {
     codec_client_->sendData(*request_encoder_, size_, false);
   }
@@ -1566,9 +1553,9 @@ name: passthrough-filter
   EXPECT_EQ(true, upstream_request_->complete());
 
   // Sends a request with headers, data, and trailers.
-  auto encoder_decoder_2 = codec_client_->startRequest(default_request_headers_);
-  request_encoder_ = &encoder_decoder_2.first;
-  response = std::move(encoder_decoder_2.second);
+  auto [encoder_ref_2, decoder_ptr_2] = codec_client_->startRequest(default_request_headers_);
+  request_encoder_ = &encoder_ref_2;
+  response = std::move(decoder_ptr_2);
   for (int i = 0; i < count_; i++) {
     codec_client_->sendData(*request_encoder_, size_, false);
   }
@@ -1604,9 +1591,8 @@ name: passthrough-filter
 
   // Sends a request with headers and data.
   changeHeadersForStopAllTests(default_request_headers_, true);
-  auto encoder_decoder = codec_client_->startRequest(default_request_headers_);
-  request_encoder_ = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
+  auto [encoder_ref, response] = codec_client_->startRequest(default_request_headers_);
+  request_encoder_ = &encoder_ref;
   for (int i = 0; i < count_ - 1; i++) {
     codec_client_->sendData(*request_encoder_, size_, false);
   }
@@ -1622,9 +1608,9 @@ name: passthrough-filter
   EXPECT_EQ(true, upstream_request_->complete());
 
   // Sends a request with headers, data, and trailers.
-  auto encoder_decoder_2 = codec_client_->startRequest(default_request_headers_);
-  request_encoder_ = &encoder_decoder_2.first;
-  response = std::move(encoder_decoder_2.second);
+  auto [encoder_ref_2, response_ptr] = codec_client_->startRequest(default_request_headers_);
+  request_encoder_ = &encoder_ref_2;
+  response = std::move(response_ptr);
   for (int i = 0; i < count_ - 1; i++) {
     codec_client_->sendData(*request_encoder_, size_, false);
   }
@@ -1657,9 +1643,8 @@ name: passthrough-filter
 
   // Sends a request with headers and data.
   changeHeadersForStopAllTests(default_request_headers_, false);
-  auto encoder_decoder = codec_client_->startRequest(default_request_headers_);
-  request_encoder_ = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
+  auto [encoder_ref, response] = codec_client_->startRequest(default_request_headers_);
+  request_encoder_ = &encoder_ref;
   for (int i = 0; i < count_ - 1; i++) {
     codec_client_->sendData(*request_encoder_, size_, false);
   }
@@ -1673,9 +1658,9 @@ name: passthrough-filter
   EXPECT_EQ(true, upstream_request_->complete());
 
   // Sends a request with headers, data, and trailers.
-  auto encoder_decoder_2 = codec_client_->startRequest(default_request_headers_);
-  request_encoder_ = &encoder_decoder_2.first;
-  response = std::move(encoder_decoder_2.second);
+  auto [encoder_ref_2, response_ptr] = codec_client_->startRequest(default_request_headers_);
+  request_encoder_ = &encoder_ref_2;
+  response = std::move(response_ptr);
   for (int i = 0; i < count_; i++) {
     codec_client_->sendData(*request_encoder_, size_, false);
   }
@@ -1789,7 +1774,7 @@ TEST_P(ProtocolIntegrationTest, TestDownstreamResetIdleTimeout) {
   initialize();
   codec_client_ = makeHttpConnection(lookupPort("http"));
 
-  auto encoder_decoder = codec_client_->startRequest(default_request_headers_);
+  auto [encoder, decoder] = codec_client_->startRequest(default_request_headers_);
 
   EXPECT_TRUE(fake_upstreams_[0]->waitForHttpConnection(*dispatcher_, fake_upstream_connection_,
                                                         TestUtility::DefaultTimeout,
@@ -1800,7 +1785,7 @@ TEST_P(ProtocolIntegrationTest, TestDownstreamResetIdleTimeout) {
   if (downstreamProtocol() == Http::CodecClient::Type::HTTP1) {
     codec_client_->close();
   } else {
-    codec_client_->sendReset(encoder_decoder.first);
+    codec_client_->sendReset(encoder);
   }
 
   if (upstreamProtocol() == FakeHttpConnection::Type::HTTP1) {
@@ -1886,9 +1871,8 @@ TEST_P(DownstreamProtocolIntegrationTest, BasicMaxStreamTimeout) {
   fake_upstreams_[0]->set_allow_unexpected_disconnects(true);
   codec_client_ = makeHttpConnection(lookupPort("http"));
 
-  auto encoder_decoder = codec_client_->startRequest(default_request_headers_);
-  request_encoder_ = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
+  auto [encoder_ref, response] = codec_client_->startRequest(default_request_headers_);
+  request_encoder_ = &encoder_ref;
 
   ASSERT_TRUE(fake_upstreams_[0]->waitForHttpConnection(*dispatcher_, fake_upstream_connection_));
   ASSERT_TRUE(fake_upstream_connection_->waitForNewStream(*dispatcher_, upstream_request_));

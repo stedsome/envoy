@@ -63,13 +63,12 @@ void Http2UpstreamIntegrationTest::bidirectionalStreaming(uint32_t bytes) {
   codec_client_ = makeHttpConnection(lookupPort("http"));
 
   // Start the request.
-  auto encoder_decoder =
+  auto [encoder_ref, response] =
       codec_client_->startRequest(Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                                                  {":path", "/test/long/url"},
                                                                  {":scheme", "http"},
                                                                  {":authority", "host"}});
-  auto response = std::move(encoder_decoder.second);
-  request_encoder_ = &encoder_decoder.first;
+  request_encoder_ = &encoder_ref;
   ASSERT_TRUE(fake_upstreams_[0]->waitForHttpConnection(*dispatcher_, fake_upstream_connection_));
   ASSERT_TRUE(fake_upstream_connection_->waitForNewStream(*dispatcher_, upstream_request_));
 
@@ -105,13 +104,12 @@ TEST_P(Http2UpstreamIntegrationTest, BidirectionalStreamingReset) {
   codec_client_ = makeHttpConnection(lookupPort("http"));
 
   // Start sending the request.
-  auto encoder_decoder =
+  auto [encoder_ref, response] =
       codec_client_->startRequest(Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                                                  {":path", "/test/long/url"},
                                                                  {":scheme", "http"},
                                                                  {":authority", "host"}});
-  auto response = std::move(encoder_decoder.second);
-  request_encoder_ = &encoder_decoder.first;
+  request_encoder_ = &encoder_ref;
   ASSERT_TRUE(fake_upstreams_[0]->waitForHttpConnection(*dispatcher_, fake_upstream_connection_));
   ASSERT_TRUE(fake_upstream_connection_->waitForNewStream(*dispatcher_, upstream_request_));
 
@@ -145,24 +143,22 @@ void Http2UpstreamIntegrationTest::simultaneousRequest(uint32_t request1_bytes,
   codec_client_ = makeHttpConnection(lookupPort("http"));
 
   // Start request 1
-  auto encoder_decoder1 =
+  auto [encoder_ref1, response1] =
       codec_client_->startRequest(Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                                                  {":path", "/test/long/url"},
                                                                  {":scheme", "http"},
                                                                  {":authority", "host"}});
-  Http::RequestEncoder* encoder1 = &encoder_decoder1.first;
-  auto response1 = std::move(encoder_decoder1.second);
+  Http::RequestEncoder* encoder1 = &encoder_ref1;
   ASSERT_TRUE(fake_upstreams_[0]->waitForHttpConnection(*dispatcher_, fake_upstream_connection_));
   ASSERT_TRUE(fake_upstream_connection_->waitForNewStream(*dispatcher_, upstream_request1));
 
   // Start request 2
-  auto encoder_decoder2 =
+  auto [encoder_ref2, response2] =
       codec_client_->startRequest(Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                                                  {":path", "/test/long/url"},
                                                                  {":scheme", "http"},
                                                                  {":authority", "host"}});
-  Http::RequestEncoder* encoder2 = &encoder_decoder2.first;
-  auto response2 = std::move(encoder_decoder2.second);
+  Http::RequestEncoder* encoder2 = &encoder_ref2;
   ASSERT_TRUE(fake_upstream_connection_->waitForNewStream(*dispatcher_, upstream_request2));
 
   // Finish request 1
@@ -225,9 +221,9 @@ void Http2UpstreamIntegrationTest::manySimultaneousRequests(uint32_t request_byt
     if (i % 2 == 0) {
       headers.addCopy(AutonomousStream::RESET_AFTER_REQUEST, "yes");
     }
-    auto encoder_decoder = codec_client_->startRequest(headers);
-    encoders.push_back(&encoder_decoder.first);
-    responses.push_back(std::move(encoder_decoder.second));
+    auto [encoder_ref, response_ptr] = codec_client_->startRequest(headers);
+    encoders.push_back(&encoder_ref);
+    responses.push_back(std::move(response_ptr));
     codec_client_->sendData(*encoders[i], request_bytes, true);
   }
 
@@ -272,13 +268,13 @@ TEST_P(Http2UpstreamIntegrationTest, UpstreamConnectionCloseWithManyStreams) {
   initialize();
   codec_client_ = makeHttpConnection(lookupPort("http"));
   for (uint32_t i = 0; i < num_requests; ++i) {
-    auto encoder_decoder =
+    auto [encoder_ref, response_ptr] =
         codec_client_->startRequest(Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                                                    {":path", "/test/long/url"},
                                                                    {":scheme", "http"},
                                                                    {":authority", "host"}});
-    encoders.push_back(&encoder_decoder.first);
-    responses.push_back(std::move(encoder_decoder.second));
+    encoders.push_back(&encoder_ref);
+    responses.push_back(std::move(response_ptr));
 
     // Ensure that we establish the first request (which will be reset) to avoid
     // a race where the reset is detected before the upstream stream is
@@ -352,16 +348,14 @@ typed_config:
 
   // Send the request.
   codec_client_ = makeHttpConnection(lookupPort("http"));
-  auto encoder_decoder =
+  auto [downstream_request, response] =
       codec_client_->startRequest(Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                                                  {":path", "/test/long/url"},
                                                                  {":scheme", "http"},
                                                                  {":authority", "host"},
                                                                  {"te", "trailers"}});
-  auto downstream_request = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
   Buffer::OwnedImpl data("HTTP body content goes here");
-  codec_client_->sendData(*downstream_request, data, true);
+  codec_client_->sendData(downstream_request, data, true);
   waitForNextUpstreamRequest();
 
   // Send the response headers.

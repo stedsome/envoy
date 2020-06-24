@@ -13,10 +13,10 @@ Globals& Globals::instance() {
 std::string Globals::describeActiveSingletonsHelper() {
   std::string ret;
   Thread::ReleasableLockGuard map_lock(map_mutex_);
-  for (auto& p : singleton_map_) {
-    SingletonSharedPtr singleton = p.second.lock();
-    if (singleton != nullptr) {
-      absl::StrAppend(&ret, "Unexpected active singleton: ", p.first, "\n");
+  for (auto& [name, singleton] : singleton_map_) {
+    SingletonSharedPtr singleton_ptr = singleton.lock();
+    if (singleton_ptr != nullptr) {
+      absl::StrAppend(&ret, "Unexpected active singleton: ", name, "\n");
     }
   }
   return ret;

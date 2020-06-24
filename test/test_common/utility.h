@@ -752,15 +752,15 @@ template <class Interface, class Impl> class TestHeaderMapImplBase : public Inte
 public:
   TestHeaderMapImplBase() = default;
   TestHeaderMapImplBase(const std::initializer_list<std::pair<std::string, std::string>>& values) {
-    for (auto& value : values) {
-      header_map_->addCopy(LowerCaseString(value.first), value.second);
+    for (auto& [key, value] : values) {
+      header_map_->addCopy(LowerCaseString(key), value);
     }
     header_map_->verifyByteSizeInternalForTest();
   }
   TestHeaderMapImplBase(
       const std::initializer_list<std::pair<Http::LowerCaseString, std::string>>& values) {
-    for (auto& value : values) {
-      header_map_->addCopy(value.first, value.second);
+    for (auto& [key, value] : values) {
+      header_map_->addCopy(key, value);
     }
     header_map_->verifyByteSizeInternalForTest();
   }

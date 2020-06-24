@@ -387,13 +387,12 @@ bool RouterCheckTool::compareResults(const std::string& actual, const std::strin
 
 void RouterCheckTool::printResults() {
   // Output failure details to stdout if details_ flag is set to true
-  for (const auto& test_result : tests_) {
+  for (const auto& [test_name, test_result_log] : tests_) {
     // All test names are printed if the details_ flag is true unless only_show_failures_ is also
     // true.
-    if ((details_ && !only_show_failures_) ||
-        (only_show_failures_ && !test_result.second.empty())) {
-      std::cout << test_result.first << std::endl;
-      for (const auto& failure : test_result.second) {
+    if ((details_ && !only_show_failures_) || (only_show_failures_ && !test_result_log.empty())) {
+      std::cout << test_name << std::endl;
+      for (const auto& failure : test_result_log) {
         std::cerr << failure << std::endl;
       }
     }

@@ -77,9 +77,9 @@ public:
     if (request_body.empty()) {
       response = codec_client_->makeHeaderOnlyRequest(request_headers);
     } else {
-      auto encoder_decoder = codec_client_->startRequest(request_headers);
-      request_encoder_ = &encoder_decoder.first;
-      response = std::move(encoder_decoder.second);
+      auto [encoder_ref, response_ptr] = codec_client_->startRequest(request_headers);
+      request_encoder_ = &encoder_ref;
+      response = std::move(response_ptr);
       // Chunk the data to simulate a real request.
       const size_t chunk_size = 5;
       size_t i = 0;

@@ -296,9 +296,9 @@ std::string TestEnvironment::substitute(const std::string& str,
   };
 
   std::string out_json_string = str;
-  for (const auto& it : path_map) {
-    const std::regex port_regex("\\{\\{ " + it.first + " \\}\\}");
-    out_json_string = std::regex_replace(out_json_string, port_regex, it.second);
+  for (const auto& [path, replacement] : path_map) {
+    const std::regex port_regex("\\{\\{ " + path + " \\}\\}");
+    out_json_string = std::regex_replace(out_json_string, port_regex, replacement);
   }
 
   // Substitute platform specific null device.
@@ -372,15 +372,15 @@ std::string TestEnvironment::temporaryFileSubstitute(const std::string& path,
   std::string out_json_string = readFileToStringForTest(json_path);
 
   // Substitute params.
-  for (const auto& it : param_map) {
-    const std::regex param_regex("\\{\\{ " + it.first + " \\}\\}");
-    out_json_string = std::regex_replace(out_json_string, param_regex, it.second);
+  for (const auto& [param, replacement] : param_map) {
+    const std::regex param_regex("\\{\\{ " + param + " \\}\\}");
+    out_json_string = std::regex_replace(out_json_string, param_regex, replacement);
   }
 
   // Substitute ports.
-  for (const auto& it : port_map) {
-    const std::regex port_regex("\\{\\{ " + it.first + " \\}\\}");
-    out_json_string = std::regex_replace(out_json_string, port_regex, std::to_string(it.second));
+  for (const auto& [port, replacement] : port_map) {
+    const std::regex port_regex("\\{\\{ " + port + " \\}\\}");
+    out_json_string = std::regex_replace(out_json_string, port_regex, std::to_string(replacement));
   }
 
   // Substitute paths and other common things.

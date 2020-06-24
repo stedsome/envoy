@@ -980,13 +980,12 @@ TEST_P(IntegrationTest, TestDelayedConnectionTeardownOnGracefulClose) {
 
   codec_client_ = makeHttpConnection(lookupPort("http"));
 
-  auto encoder_decoder =
+  auto [encoder_ref, response] =
       codec_client_->startRequest(Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                                                  {":path", "/test/long/url"},
                                                                  {":scheme", "http"},
                                                                  {":authority", "host"}});
-  request_encoder_ = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
+  request_encoder_ = &encoder_ref;
 
   codec_client_->sendData(*request_encoder_, 1024 * 65, false);
 
@@ -1018,13 +1017,12 @@ TEST_P(IntegrationTest, TestDelayedConnectionTeardownConfig) {
 
   codec_client_ = makeHttpConnection(lookupPort("http"));
 
-  auto encoder_decoder =
+  auto [encoder_ref, response] =
       codec_client_->startRequest(Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                                                  {":path", "/test/long/url"},
                                                                  {":scheme", "http"},
                                                                  {":authority", "host"}});
-  request_encoder_ = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
+  request_encoder_ = &encoder_ref;
 
   codec_client_->sendData(*request_encoder_, 1024 * 65, false);
 
@@ -1058,13 +1056,12 @@ TEST_P(IntegrationTest, TestDelayedConnectionTeardownTimeoutTrigger) {
 
   codec_client_ = makeHttpConnection(lookupPort("http"));
 
-  auto encoder_decoder =
+  auto [encoder_ref, response] =
       codec_client_->startRequest(Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                                                  {":path", "/test/long/url"},
                                                                  {":scheme", "http"},
                                                                  {":authority", "host"}});
-  request_encoder_ = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
+  request_encoder_ = &encoder_ref;
 
   codec_client_->sendData(*request_encoder_, 1024 * 65, false);
 
