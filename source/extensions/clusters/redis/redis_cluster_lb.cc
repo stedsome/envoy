@@ -6,7 +6,7 @@ namespace Clusters {
 namespace Redis {
 
 bool ClusterSlot::operator==(const Envoy::Extensions::Clusters::Redis::ClusterSlot& rhs) const {
-  return start_ == rhs.start_ && end_ == rhs.end_ && master_ == rhs.master_ &&
+  return start_ == rhs.start_ && end_ == rhs.end_ && primary_ == rhs.primary_ &&
          replicas_ == rhs.replicas_;
 }
 
@@ -30,29 +30,36 @@ bool RedisClusterLoadBalancerFactory::onClusterSlotUpdate(ClusterSlotsPtr&& slot
 
   for (const ClusterSlot& slot : *slots) {
     // look in the updated map
-    const std::string master_address = slot.master()->asString();
+    const std::string primary_address = slot.primary()->asString();
 
+<<<<<<< HEAD
     const auto& [emplace_iter, emplace_status] =
         shards.try_emplace(master_address, shard_vector->size());
     if (emplace_status) {
       auto master_host = all_hosts.find(master_address);
       ASSERT(master_host != all_hosts.end(),
+=======
+    auto result = shards.try_emplace(primary_address, shard_vector->size());
+    if (result.second) {
+      auto primary_host = all_hosts.find(primary_address);
+      ASSERT(primary_host != all_hosts.end(),
+>>>>>>> 7a83dbbdd668dd1b90c2b532c18f8c4f5f609a39
              "we expect all address to be found in the updated_hosts");
 
-      Upstream::HostVectorSharedPtr master_and_replicas = std::make_shared<Upstream::HostVector>();
+      Upstream::HostVectorSharedPtr primary_and_replicas = std::make_shared<Upstream::HostVector>();
       Upstream::HostVectorSharedPtr replicas = std::make_shared<Upstream::HostVector>();
-      master_and_replicas->push_back(master_host->second);
+      primary_and_replicas->push_back(primary_host->second);
 
       for (auto const& replica : slot.replicas()) {
         auto replica_host = all_hosts.find(replica->asString());
         ASSERT(replica_host != all_hosts.end(),
                "we expect all address to be found in the updated_hosts");
         replicas->push_back(replica_host->second);
-        master_and_replicas->push_back(replica_host->second);
+        primary_and_replicas->push_back(replica_host->second);
       }
 
       shard_vector->emplace_back(
-          std::make_shared<RedisShard>(master_host->second, replicas, master_and_replicas));
+          std::make_shared<RedisShard>(primary_host->second, replicas, primary_and_replicas));
     }
 
     for (auto i = slot.start(); i <= slot.end(); ++i) {
@@ -85,7 +92,7 @@ void RedisClusterLoadBalancerFactory::onHostHealthUpdate() {
 
   for (auto const& shard : *current_shard_vector) {
     shard_vector->emplace_back(std::make_shared<RedisShard>(
-        shard->master(), shard->replicas().hostsPtr(), shard->allHosts().hostsPtr()));
+        shard->primary(), shard->replicas().hostsPtr(), shard->allHosts().hostsPtr()));
   }
 
   {
@@ -101,7 +108,7 @@ Upstream::LoadBalancerPtr RedisClusterLoadBalancerFactory::create() {
 
 namespace {
 Upstream::HostConstSharedPtr chooseRandomHost(const Upstream::HostSetImpl& host_set,
-                                              Runtime::RandomGenerator& random) {
+                                              Random::RandomGenerator& random) {
   auto hosts = host_set.healthyHosts();
   if (hosts.empty()) {
     hosts = host_set.degradedHosts();
@@ -139,11 +146,11 @@ Upstream::HostConstSharedPtr RedisClusterLoadBalancerFactory::RedisClusterLoadBa
   auto redis_context = dynamic_cast<RedisLoadBalancerContext*>(context);
   if (redis_context && redis_context->isReadCommand()) {
     switch (redis_context->readPolicy()) {
-    case NetworkFilters::Common::Redis::Client::ReadPolicy::Master:
-      return shard->master();
-    case NetworkFilters::Common::Redis::Client::ReadPolicy::PreferMaster:
-      if (shard->master()->health() == Upstream::Host::Health::Healthy) {
-        return shard->master();
+    case NetworkFilters::Common::Redis::Client::ReadPolicy::Primary:
+      return shard->primary();
+    case NetworkFilters::Common::Redis::Client::ReadPolicy::PreferPrimary:
+      if (shard->primary()->health() == Upstream::Host::Health::Healthy) {
+        return shard->primary();
       } else {
         return chooseRandomHost(shard->allHosts(), random_);
       }
@@ -159,7 +166,7 @@ Upstream::HostConstSharedPtr RedisClusterLoadBalancerFactory::RedisClusterLoadBa
       return chooseRandomHost(shard->allHosts(), random_);
     }
   }
-  return shard->master();
+  return shard->primary();
 }
 
 bool RedisLoadBalancerContextImpl::isReadRequest(
