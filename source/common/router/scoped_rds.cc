@@ -317,7 +317,7 @@ void ScopedRdsConfigSubscription::onConfigUpdate(
         dynamic_cast<const envoy::config::route::v3::ScopedRouteConfiguration&>(
             resource.get().resource());
     const std::string& scope_name = scoped_route.name();
-    const auto [it, emplace_status] = 
+    const auto [it, emplace_status] =
         scoped_routes.try_emplace(scope_name, std::move(scoped_route));
     if (!emplace_status) {
       throw EnvoyException(
@@ -348,8 +348,8 @@ ScopedRdsConfigProvider::ScopedRdsConfigProvider(
 
 ProtobufTypes::MessagePtr ScopedRoutesConfigProviderManager::dumpConfigs() const {
   auto config_dump = std::make_unique<envoy::admin::v3::ScopedRoutesConfigDump>();
-  for (const auto& element : configSubscriptions()) {
-    auto subscription = element.second.lock();
+  for (const auto& [key, element] : configSubscriptions()) {
+    auto subscription = element.lock();
     ASSERT(subscription);
 
     if (subscription->configInfo()) {
@@ -359,9 +359,9 @@ ProtobufTypes::MessagePtr ScopedRoutesConfigProviderManager::dumpConfigs() const
           static_cast<ScopedRdsConfigSubscription*>(subscription.get());
       dynamic_config->set_name(typed_subscription->name());
       const ScopedRouteMap& scoped_route_map = typed_subscription->scopedRouteMap();
-      for (const auto& it : scoped_route_map) {
+      for (const auto& [scoped_route_name, scoped_route] : scoped_route_map) {
         dynamic_config->mutable_scoped_route_configs()->Add()->PackFrom(
-            API_RECOVER_ORIGINAL(it.second->configProto()));
+            API_RECOVER_ORIGINAL(scoped_route->configProto()));
       }
       TimestampUtil::systemClockToTimestamp(subscription->lastUpdated(),
                                             *dynamic_config->mutable_last_updated());

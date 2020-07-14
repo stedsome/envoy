@@ -170,16 +170,16 @@ void Filter::onComplete(Filters::Common::ExtAuthz::ResponsePtr&& response) {
       ENVOY_STREAM_LOG(debug, "ext_authz is clearing route cache", *callbacks_);
       callbacks_->clearRouteCache();
     }
-    for (const auto& [header_key, header_val] : response->headers_to_set) {
-      ENVOY_STREAM_LOG(trace, "'{}':'{}'", *callbacks_, header_key.get(), header_val);
-      request_headers_->setCopy(header_key, header_val);
+    for (const auto& [header_name, header] : response->headers_to_set) {
+      ENVOY_STREAM_LOG(trace, "'{}':'{}'", *callbacks_, header_name.get(), header);
+      request_headers_->setCopy(header_name, header);
     }
-    for (const auto& [header_key, header_val] : response->headers_to_add) {
-      ENVOY_STREAM_LOG(trace, "'{}':'{}'", *callbacks_, header_key.get(), header_val);
-      request_headers_->setCopy(header_key, header_val);
+    for (const auto& [header_name, header] : response->headers_to_add) {
+      ENVOY_STREAM_LOG(trace, "'{}':'{}'", *callbacks_, header_name.get(), header);
+      request_headers_->addCopy(header_name, header);
     }
-    for (const auto& [header_key, header_val] : response->headers_to_append) {
-      const Http::HeaderEntry* header_to_modify = request_headers_->get(header_key);
+    for (const auto& [header_name, header] : response->headers_to_append) {
+      const Http::HeaderEntry* header_to_modify = request_headers_->get(header_name);
       // TODO(dio): Add a flag to allow appending non-existent headers, without setting it first
       // (via `headers_to_add`). For example, given:
       // 1. Original headers {"original": "true"}
@@ -189,11 +189,11 @@ void Filter::onComplete(Filters::Common::ExtAuthz::ResponsePtr&& response) {
       // combined headers: {{"original": "true"}, {"append": "1"}, {"append": "2"}}) to the request
       // to upstream server by only sets `headers_to_append`.
       if (header_to_modify != nullptr) {
-        ENVOY_STREAM_LOG(trace, "'{}':'{}'", *callbacks_, header_key.get(), header_val);
+        ENVOY_STREAM_LOG(trace, "'{}':'{}'", *callbacks_, header_name.get(), header);
         // The current behavior of appending is by combining entries with the same key, into one
         // entry. The value of that combined entry is separated by ",".
         // TODO(dio): Consider to use addCopy instead.
-        request_headers_->appendCopy(header_key, header_val);
+        request_headers_->appendCopy(header_name, header);
       }
     }
     if (cluster_) {
@@ -233,14 +233,14 @@ void Filter::onComplete(Filters::Common::ExtAuthz::ResponsePtr&& response) {
                            "ext_authz filter added header(s) to the local response:", callbacks);
           // Firstly, remove all headers requested by the ext_authz filter, to ensure that they will
           // override existing headers.
-          for (const auto& [header_key, header_val] : headers) {
-            response_headers.remove(header_key);
+          for (const auto& [header_name, header] : headers) {
+            response_headers.remove(header_name);
           }
           // Then set all of the requested headers, allowing the same header to be set multiple
           // times, e.g. `Set-Cookie`.
-          for (const auto& [header_key, header_val] : headers) {
-            ENVOY_STREAM_LOG(trace, " '{}':'{}'", callbacks, header_key.get(), header_val);
-            response_headers.addCopy(header_key, header_val);
+          for (const auto& [header_name, header] : headers) {
+            ENVOY_STREAM_LOG(trace, " '{}':'{}'", callbacks, header_name.get(), header);
+            response_headers.addCopy(header_name, header);
           }
         },
         absl::nullopt, RcDetails::get().AuthzDenied);

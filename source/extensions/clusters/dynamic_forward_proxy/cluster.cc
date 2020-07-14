@@ -139,9 +139,8 @@ void Cluster::swapAndUpdateMap(const HostInfoMapSharedPtr& new_hosts_map,
 
   Upstream::PriorityStateManager priority_state_manager(*this, local_info_, nullptr);
   priority_state_manager.initializePriorityFor(dummy_locality_lb_endpoint_);
-  for (const auto& host : (*new_hosts_map)) {
-    priority_state_manager.registerHostForPriority(host.second.logical_host_,
-                                                   dummy_locality_lb_endpoint_);
+  for (const auto& [host_key, host] : (*new_hosts_map)) {
+    priority_state_manager.registerHostForPriority(host.logical_host_, dummy_locality_lb_endpoint_);
   }
   priority_state_manager.updateClusterPrioritySet(
       0, std::move(priority_state_manager.priorityState()[0].first), hosts_added, hosts_removed,

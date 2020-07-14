@@ -147,11 +147,9 @@ AggregateClusterLoadBalancer::LoadBalancerImpl::chooseHost(Upstream::LoadBalance
   const auto [priority, host_availability] =
       choosePriority(random_.random(), priority_loads->healthy_priority_load_,
                      priority_loads->degraded_priority_load_);
+  const auto [host_priority, cluster] = priority_context_.priority_to_cluster_[priority];
+  AggregateLoadBalancerContext aggregate_context(context, host_availability, host_priority);
 
-  AggregateLoadBalancerContext aggregate_context(
-      context, host_availability, priority_context_.priority_to_cluster_[priority].first);
-
-  Upstream::ThreadLocalCluster* cluster = priority_context_.priority_to_cluster_[priority].second;
   return cluster->loadBalancer().chooseHost(&aggregate_context);
 }
 

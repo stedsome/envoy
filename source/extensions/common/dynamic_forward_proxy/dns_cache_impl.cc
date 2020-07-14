@@ -36,9 +36,9 @@ DnsCacheImpl::DnsCacheImpl(
 }
 
 DnsCacheImpl::~DnsCacheImpl() {
-  for (const auto& primary_host : primary_hosts_) {
-    if (primary_host.second->active_query_ != nullptr) {
-      primary_host.second->active_query_->cancel();
+  for (const auto& [host_key, primary_host] : primary_hosts_) {
+    if (primary_host->active_query_ != nullptr) {
+      primary_host->active_query_->cancel();
     }
   }
 

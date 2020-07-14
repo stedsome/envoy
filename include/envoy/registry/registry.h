@@ -342,13 +342,13 @@ private:
   static std::unique_ptr<absl::flat_hash_map<std::string, Base*>> buildFactoriesByType() {
     auto mapping = std::make_unique<absl::flat_hash_map<std::string, Base*>>();
 
-    for (const auto& factory : factories()) {
-      if (factory.second == nullptr) {
+    for (const auto& [factory_name, factory] : factories()) {
+      if (factory == nullptr) {
         continue;
       }
 
       // Skip untyped factories.
-      std::string config_type = factory.second->configType();
+      std::string config_type = factory->configType();
       if (config_type.empty()) {
         continue;
       }
@@ -356,14 +356,14 @@ private:
       // Register config types in the mapping and traverse the deprecated message type chain.
       while (true) {
         auto it = mapping->find(config_type);
-        if (it != mapping->end() && it->second != factory.second) {
+        if (it != mapping->end() && it->second != factory) {
           // Mark double-registered types with a nullptr.
           // See issue https://github.com/envoyproxy/envoy/issues/9643.
           ENVOY_LOG(warn, "Double registration for type: '{}' by '{}' and '{}'", config_type,
-                    factory.second->name(), it->second ? it->second->name() : "");
+                    factory->name(), it->second ? it->second->name() : "");
           it->second = nullptr;
         } else {
-          mapping->emplace(std::make_pair(config_type, factory.second));
+          mapping->emplace(std::make_pair(config_type, factory));
         }
 
         const Protobuf::Descriptor* previous =

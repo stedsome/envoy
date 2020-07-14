@@ -379,8 +379,8 @@ ClusterManagerImpl::ClusterManagerImpl(
   // Proceed to add all static bootstrap clusters to the init manager. This will immediately
   // initialize any primary clusters. Post-init processing further initializes any thread
   // aware load balancer and sets up the per-worker host set updates.
-  for (auto& cluster : active_clusters_) {
-    init_helper_.addCluster(*cluster.second->cluster_);
+  for (auto& [cluser_name, cluster] : active_clusters_) {
+    init_helper_.addCluster(*cluster->cluster_);
   }
 
   // Potentially move to secondary initialization on the static bootstrap clusters if all primary
@@ -995,9 +995,9 @@ ClusterManagerImpl::ThreadLocalClusterManagerImpl::~ThreadLocalClusterManagerImp
   host_http_conn_pool_map_.clear();
   host_tcp_conn_pool_map_.clear();
   ASSERT(host_tcp_conn_map_.empty());
-  for (auto& cluster : thread_local_clusters_) {
-    if (&cluster.second->priority_set_ != local_priority_set_) {
-      cluster.second.reset();
+  for (auto& [cluster_name, cluster] : thread_local_clusters_) {
+    if (&cluster->priority_set_ != local_priority_set_) {
+      cluster.reset();
     }
   }
   thread_local_clusters_.clear();
@@ -1069,8 +1069,8 @@ void ClusterManagerImpl::ThreadLocalClusterManagerImpl::drainTcpConnPools(
     HostSharedPtr old_host, TcpConnPoolsContainer& container) {
   container.drains_remaining_ += container.pools_.size();
 
-  for (const auto& pair : container.pools_) {
-    pair.second->addDrainedCallback([this, old_host]() -> void {
+  for (const auto& [key, pool] : container.pools_) {
+    pool->addDrainedCallback([this, old_host]() -> void {
       if (destroying_) {
         // It is possible for a connection pool to fire drain callbacks during destruction. Instead
         // of checking if old_host actually exists in the map, it's clearer and cleaner to keep
@@ -1083,8 +1083,8 @@ void ClusterManagerImpl::ThreadLocalClusterManagerImpl::drainTcpConnPools(
       ASSERT(container.drains_remaining_ > 0);
       container.drains_remaining_--;
       if (container.drains_remaining_ == 0) {
-        for (auto& pair : container.pools_) {
-          thread_local_dispatcher_.deferredDelete(std::move(pair.second));
+        for (auto& [key, pool] : container.pools_) {
+          thread_local_dispatcher_.deferredDelete(std::move(pool));
         }
         host_tcp_conn_pool_map_.erase(old_host);
       }
@@ -1172,8 +1172,7 @@ void ClusterManagerImpl::ThreadLocalClusterManagerImpl::onHostHealthFailure(
     // active connections.
     const auto& container = config.host_tcp_conn_pool_map_.find(host);
     if (container != config.host_tcp_conn_pool_map_.end()) {
-      for (const auto& pair : container->second.pools_) {
-        const Tcp::ConnectionPool::InstancePtr& pool = pair.second;
+      for (const auto& [key, pool] : container->second.pools_) {
         if (host->cluster().features() &
             ClusterInfo::Features::CLOSE_CONNECTIONS_ON_HOST_HEALTH_FAILURE) {
           pool->closeConnections();

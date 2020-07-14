@@ -146,7 +146,7 @@ void SymbolTableImpl::Encoding::decodeTokens(
       array += length;
     } else {
       auto const [symbol, num_bytes_consumed] = decodeNumber(array);
-      symbolTokenFn(symbol);
+      symbol_token_fn(symbol);
       size -= num_bytes_consumed;
       array += num_bytes_consumed;
     }

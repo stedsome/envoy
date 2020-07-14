@@ -352,8 +352,8 @@ LoaderImpl::LoaderImpl(Event::Dispatcher& dispatcher, ThreadLocal::SlotAllocator
       init_watcher_("RDTS", [this]() { onRdtsReady(); }), store_(store) {
   std::unordered_set<std::string> layer_names;
   for (const auto& layer : config_.layers()) {
-    auto ret = layer_names.insert(layer.name());
-    if (!ret.second) {
+    auto [ret, ret_status] = layer_names.insert(layer.name());
+    if (!ret_status) {
       throw EnvoyException(absl::StrCat("Duplicate layer name: ", layer.name()));
     }
     switch (layer.layer_specifier_case()) {

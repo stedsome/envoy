@@ -84,8 +84,8 @@ void NewGrpcMuxImpl::onDiscoveryResponse(
 }
 
 void NewGrpcMuxImpl::onStreamEstablished() {
-  for (auto& sub : subscriptions_) {
-    sub.second->sub_state_.markStreamFresh();
+  for (auto& [sub_name, sub] : subscriptions_) {
+    sub->sub_state_.markStreamFresh();
   }
   trySendDiscoveryRequests();
 }

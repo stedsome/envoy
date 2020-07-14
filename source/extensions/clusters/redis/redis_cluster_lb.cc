@@ -32,18 +32,10 @@ bool RedisClusterLoadBalancerFactory::onClusterSlotUpdate(ClusterSlotsPtr&& slot
     // look in the updated map
     const std::string primary_address = slot.primary()->asString();
 
-<<<<<<< HEAD
-    const auto& [emplace_iter, emplace_status] =
-        shards.try_emplace(master_address, shard_vector->size());
-    if (emplace_status) {
-      auto master_host = all_hosts.find(master_address);
-      ASSERT(master_host != all_hosts.end(),
-=======
     auto result = shards.try_emplace(primary_address, shard_vector->size());
     if (result.second) {
       auto primary_host = all_hosts.find(primary_address);
       ASSERT(primary_host != all_hosts.end(),
->>>>>>> 7a83dbbdd668dd1b90c2b532c18f8c4f5f609a39
              "we expect all address to be found in the updated_hosts");
 
       Upstream::HostVectorSharedPtr primary_and_replicas = std::make_shared<Upstream::HostVector>();
@@ -63,7 +55,7 @@ bool RedisClusterLoadBalancerFactory::onClusterSlotUpdate(ClusterSlotsPtr&& slot
     }
 
     for (auto i = slot.start(); i <= slot.end(); ++i) {
-      updated_slots->at(i) = emplace_iter->second;
+      updated_slots->at(i) = result.first->second;
     }
   }
 

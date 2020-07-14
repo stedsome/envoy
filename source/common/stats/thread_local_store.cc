@@ -155,8 +155,7 @@ std::vector<ParentHistogramSharedPtr> ThreadLocalStoreImpl::histograms() const {
   // in histograms with duplicate names, but until shared storage is implemented it's ultimately
   // less confusing for users who have such configs.
   for (ScopeImpl* scope : scopes_) {
-    for (const auto& name_histogram_pair : scope->central_cache_->histograms_) {
-      const ParentHistogramSharedPtr& parent_hist = name_histogram_pair.second;
+    for (const auto& [name, parent_hist] : scope->central_cache_->histograms_) {
       ret.push_back(parent_hist);
     }
   }
@@ -185,10 +184,9 @@ void ThreadLocalStoreImpl::mergeHistograms(PostMergeCb merge_complete_cb) {
     merge_in_progress_ = true;
     tls_->runOnAllThreads(
         [this]() -> void {
-          for (const auto& scope : tls_->getTyped<TlsCache>().scope_cache_) {
-            const TlsCacheEntry& tls_cache_entry = scope.second;
-            for (const auto& name_histogram_pair : tls_cache_entry.histograms_) {
-              const TlsHistogramSharedPtr& tls_hist = name_histogram_pair.second;
+          for (const auto& [scope_name, tls_cache_entry] :
+               tls_->getTyped<TlsCache>().scope_cache_) {
+            for (const auto& [tls_hist_name, tls_hist] : tls_cache_entry.histograms_) {
               tls_hist->beginMerge();
             }
           }

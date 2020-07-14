@@ -572,9 +572,8 @@ SubsetLoadBalancer::findOrCreateSubset(LbSubsetMap& subsets, const SubsetMetadat
 // Invokes cb for each LbSubsetEntryPtr in subsets.
 void SubsetLoadBalancer::forEachSubset(LbSubsetMap& subsets,
                                        std::function<void(LbSubsetEntryPtr)> cb) {
-  for (auto& vsm : subsets) {
-    for (auto& em : vsm.second) {
-      LbSubsetEntryPtr entry = em.second;
+  for (auto& [subset_key, value_subset_map] : subsets) {
+    for (auto& [entry_key, entry] : value_subset_map) {
       cb(entry);
       forEachSubset(entry->children_, cb);
     }
