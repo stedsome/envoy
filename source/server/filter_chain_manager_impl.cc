@@ -555,10 +555,9 @@ const Network::FilterChain* FilterChainManagerImpl::findFilterChainForSourceIpAn
 }
 
 void FilterChainManagerImpl::convertIPsToTries() {
-  for (auto& port : destination_ports_map_) {
+  for (auto& [port_map_key, destination_ips_pair] : destination_ports_map_) {
     // These variables are used as we build up the destination CIDRs used for the trie.
-    auto& destination_ips_pair = port.second;
-    auto& destination_ips_map = destination_ips_pair.first;
+    auto& [destination_ips_map, destination_ips_trie] = destination_ips_pair;
     std::vector<std::pair<ServerNamesMapSharedPtr, std::vector<Network::Address::CidrRange>>>
         destination_ips_list;
     destination_ips_list.reserve(destination_ips_map.size());
@@ -589,7 +588,7 @@ void FilterChainManagerImpl::convertIPsToTries() {
       }
     }
 
-    destination_ips_pair.second = std::make_unique<DestinationIPsTrie>(destination_ips_list, true);
+    destination_ips_trie = std::make_unique<DestinationIPsTrie>(destination_ips_list, true);
   }
 }
 

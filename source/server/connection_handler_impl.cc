@@ -33,9 +33,9 @@ void ConnectionHandlerImpl::addListener(absl::optional<uint64_t> overridden_list
   ActiveListenerDetails details;
   if (config.listenSocketFactory().socketType() == Network::Socket::Type::Stream) {
     if (overridden_listener.has_value()) {
-      for (auto& listener : listeners_) {
-        if (listener.second.listener_->listenerTag() == overridden_listener) {
-          listener.second.tcp_listener_->get().updateListenerConfig(config);
+      for (auto& [listener_address, listener] : listeners_) {
+        if (listener.listener_->listenerTag() == overridden_listener) {
+          listener.tcp_listener_->get().updateListenerConfig(config);
           return;
         }
       }
@@ -68,9 +68,9 @@ void ConnectionHandlerImpl::removeListeners(uint64_t listener_tag) {
 void ConnectionHandlerImpl::removeFilterChains(
     uint64_t listener_tag, const std::list<const Network::FilterChain*>& filter_chains,
     std::function<void()> completion) {
-  for (auto& listener : listeners_) {
-    if (listener.second.listener_->listenerTag() == listener_tag) {
-      listener.second.tcp_listener_->get().deferredRemoveFilterChains(filter_chains);
+  for (auto& [listener_address, listener] : listeners_) {
+    if (listener.listener_->listenerTag() == listener_tag) {
+      listener.tcp_listener_->get().deferredRemoveFilterChains(filter_chains);
       // Completion is deferred because the above removeFilterChains() may defer delete connection.
       Event::DeferredTaskUtil::deferredRun(dispatcher_, std::move(completion));
       return;
@@ -80,30 +80,30 @@ void ConnectionHandlerImpl::removeFilterChains(
 }
 
 void ConnectionHandlerImpl::stopListeners(uint64_t listener_tag) {
-  for (auto& listener : listeners_) {
-    if (listener.second.listener_->listenerTag() == listener_tag) {
-      listener.second.listener_->shutdownListener();
+  for (auto& [listener_address, listener] : listeners_) {
+    if (listener.listener_->listenerTag() == listener_tag) {
+      listener.listener_->shutdownListener();
     }
   }
 }
 
 void ConnectionHandlerImpl::stopListeners() {
-  for (auto& listener : listeners_) {
-    listener.second.listener_->shutdownListener();
+  for (auto& [listener_address, listener] : listeners_) {
+    listener.listener_->shutdownListener();
   }
 }
 
 void ConnectionHandlerImpl::disableListeners() {
   disable_listeners_ = true;
-  for (auto& listener : listeners_) {
-    listener.second.listener_->pauseListening();
+  for (auto& [listener_address, listener] : listeners_) {
+    listener.listener_->pauseListening();
   }
 }
 
 void ConnectionHandlerImpl::enableListeners() {
   disable_listeners_ = false;
-  for (auto& listener : listeners_) {
-    listener.second.listener_->resumeListening();
+  for (auto& [listener_address, listener] : listeners_) {
+    listener.listener_->resumeListening();
   }
 }
 
@@ -170,9 +170,9 @@ ConnectionHandlerImpl::ActiveTcpListener::~ActiveTcpListener() {
     parent_.dispatcher_.deferredDelete(std::move(removed));
   }
 
-  for (auto& chain_and_connections : connections_by_context_) {
-    ASSERT(chain_and_connections.second != nullptr);
-    auto& connections = chain_and_connections.second->connections_;
+  for (auto& [filter_chain, active_connections] : connections_by_context_) {
+    ASSERT(active_connections != nullptr);
+    auto& connections = active_connections->connections_;
     while (!connections.empty()) {
       connections.front()->connection_->close(Network::ConnectionCloseType::NoFlush);
     }
@@ -479,25 +479,22 @@ void ConnectionHandlerImpl::ActiveTcpListener::post(Network::ConnectionSocketPtr
   RebalancedSocketSharedPtr socket_to_rebalance = std::make_shared<RebalancedSocket>();
   socket_to_rebalance->socket = std::move(socket);
 
-  parent_.dispatcher_.post(
-      [socket_to_rebalance, tag = config_->listenerTag(), &parent = parent_]() {
-        // TODO(mattklein123): We should probably use a hash table here to lookup the tag instead of
-        // iterating through the listener list.
-        for (const auto& listener : parent.listeners_) {
-          if (listener.second.listener_->listener() != nullptr &&
-              listener.second.listener_->listenerTag() == tag) {
-            // If the tag matches this must be a TCP listener.
-            ASSERT(listener.second.tcp_listener_.has_value());
-            listener.second.tcp_listener_.value().get().onAcceptWorker(
-                std::move(socket_to_rebalance->socket),
-                listener.second.tcp_listener_.value()
-                    .get()
-                    .config_->handOffRestoredDestinationConnections(),
-                true);
-            return;
-          }
-        }
-      });
+  parent_.dispatcher_.post([socket_to_rebalance, tag = config_->listenerTag(),
+                            &parent = parent_]() {
+    // TODO(mattklein123): We should probably use a hash table here to lookup the tag instead of
+    // iterating through the listener list.
+    for (const auto& [listener_address, listener] : parent.listeners_) {
+      if (listener.listener_->listener() != nullptr && listener.listener_->listenerTag() == tag) {
+        // If the tag matches this must be a TCP listener.
+        ASSERT(listener.tcp_listener_.has_value());
+        listener.tcp_listener_.value().get().onAcceptWorker(
+            std::move(socket_to_rebalance->socket),
+            listener.tcp_listener_.value().get().config_->handOffRestoredDestinationConnections(),
+            true);
+        return;
+      }
+    }
+  });
 }
 
 ConnectionHandlerImpl::ActiveConnections::ActiveConnections(

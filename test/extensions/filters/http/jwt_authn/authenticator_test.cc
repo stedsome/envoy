@@ -69,8 +69,8 @@ public:
 
   void initTokenExtractor() {
     JwtProviderList providers;
-    for (const auto& it : proto_config_.providers()) {
-      providers.emplace_back(&it.second);
+    for (const auto& [provider_key, provider] : proto_config_.providers()) {
+      providers.emplace_back(&provider);
     }
     extractor_ = Extractor::create(providers);
   }

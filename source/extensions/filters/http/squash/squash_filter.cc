@@ -53,8 +53,7 @@ std::string SquashFilterConfig::getAttachment(const ProtobufWkt::Struct& attachm
 }
 
 void SquashFilterConfig::updateTemplateInStruct(ProtobufWkt::Struct& attachment_template) {
-  for (auto& value_it : *attachment_template.mutable_fields()) {
-    auto& curvalue = value_it.second;
+  for (auto& [map_key, curvalue] : *attachment_template.mutable_fields()) {
     updateTemplateInValue(curvalue);
   }
 }

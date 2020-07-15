@@ -18,12 +18,10 @@ TEST(DubboProtocolImplTest, NotEnoughData) {
   Buffer::OwnedImpl buffer;
   DubboProtocolImpl dubbo_protocol;
   MessageMetadataSharedPtr metadata = std::make_shared<MessageMetadata>();
-  auto result = dubbo_protocol.decodeHeader(buffer, metadata);
-  EXPECT_FALSE(result.second);
+  EXPECT_FALSE(dubbo_protocol.decodeHeader(buffer, metadata).second);
 
   buffer.add(std::string(15, 0x00));
-  result = dubbo_protocol.decodeHeader(buffer, metadata);
-  EXPECT_FALSE(result.second);
+  EXPECT_FALSE(dubbo_protocol.decodeHeader(buffer, metadata).second);
 }
 
 TEST(DubboProtocolImplTest, Name) {

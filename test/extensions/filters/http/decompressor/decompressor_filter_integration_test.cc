@@ -173,14 +173,13 @@ TEST_P(DecompressorIntegrationTest, BidirectionalDecompressionError) {
   initializeFilter(bad_config);
 
   // Enable request decompression by setting the Content-Encoding header to gzip.
-  auto encoder_decoder =
+  auto [encoder_decoder_ref, response] =
       codec_client_->startRequest(Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                                                  {":scheme", "http"},
                                                                  {":path", "/test/long/url"},
                                                                  {":authority", "host"},
                                                                  {"content-encoding", "gzip"}});
-  auto request_encoder = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
+  auto request_encoder = &encoder_decoder_ref;
 
   // Send first data chunk upstream.
   Buffer::OwnedImpl request_data1;

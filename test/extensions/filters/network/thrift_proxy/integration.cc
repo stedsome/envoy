@@ -75,7 +75,8 @@ void BaseThriftIntegrationTest::preparePayloads(const PayloadOptions& options,
     std::vector<std::string> headers;
     std::transform(options.headers_.begin(), options.headers_.end(), std::back_inserter(headers),
                    [](const std::pair<std::string, std::string>& header) -> std::string {
-                     return header.first + "=" + header.second;
+                     const auto& [header_key, header_val] = header;
+                     return header_key + "=" + header_val;
                    });
     args.push_back(absl::StrJoin(headers, ","));
   }

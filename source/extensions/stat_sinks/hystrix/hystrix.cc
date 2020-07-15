@@ -370,8 +370,8 @@ void HystrixSink::flush(Stats::MetricSnapshot& snapshot) {
     }
   }
 
-  for (auto& cluster : clusters) {
-    Upstream::ClusterInfoConstSharedPtr cluster_info = cluster.second.get().info();
+  for (auto& [cluster_key, cluster] : clusters) {
+    Upstream::ClusterInfoConstSharedPtr cluster_info = cluster.get().info();
 
     std::unique_ptr<ClusterStatsCache>& cluster_stats_cache_ptr =
         cluster_stats_cache_map_[cluster_info->name()];

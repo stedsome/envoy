@@ -50,10 +50,11 @@ public:
       : HttpIntegrationTest(Http::CodecClient::Type::HTTP3, GetParam().first,
                             ConfigHelper::quicHttpProxyConfig()),
         supported_versions_([]() {
-          if (GetParam().second == QuicVersionType::GquicQuicCrypto) {
+          const auto& [version, quic_version_type] = GetParam();
+          if (quic_version_type == QuicVersionType::GquicQuicCrypto) {
             return quic::CurrentSupportedVersionsWithQuicCrypto();
           }
-          bool use_http3 = GetParam().second == QuicVersionType::Iquic;
+          bool use_http3 = quic_version_type == QuicVersionType::Iquic;
           SetQuicReloadableFlag(quic_enable_version_draft_29, use_http3);
           SetQuicReloadableFlag(quic_disable_version_draft_27, !use_http3);
           SetQuicReloadableFlag(quic_disable_version_draft_25, !use_http3);
@@ -265,14 +266,12 @@ TEST_P(QuicHttpIntegrationTest, TestDelayedConnectionTeardownTimeoutTrigger) {
   fake_upstreams_[0]->set_allow_unexpected_disconnects(true);
 
   codec_client_ = makeHttpConnection(lookupPort("http"));
-
-  auto encoder_decoder =
+  auto [encoder_decoder_ref, response] =
       codec_client_->startRequest(Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                                                  {":path", "/test/long/url"},
                                                                  {":scheme", "http"},
                                                                  {":authority", "host"}});
-  request_encoder_ = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
+  request_encoder_ = &encoder_decoder_ref;
 
   codec_client_->sendData(*request_encoder_, 1024 * 65, false);
 
@@ -384,13 +383,12 @@ TEST_P(QuicHttpIntegrationTest, ConnectionMigration) {
   initialize();
   uint32_t old_port = lookupPort("http");
   codec_client_ = makeHttpConnection(old_port);
-  auto encoder_decoder =
+  auto [encoder_decoder_ref, response] =
       codec_client_->startRequest(Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                                                  {":path", "/test/long/url"},
                                                                  {":scheme", "http"},
                                                                  {":authority", "host"}});
-  request_encoder_ = &encoder_decoder.first;
-  auto response = std::move(encoder_decoder.second);
+  request_encoder_ = &encoder_decoder_ref;
 
   codec_client_->sendData(*request_encoder_, 1024u, false);
 

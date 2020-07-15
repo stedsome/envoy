@@ -93,10 +93,10 @@ TEST(ResponseFlagsUtilsTest, toResponseFlagConversion) {
 
   EXPECT_FALSE(ResponseFlagUtils::toResponseFlag("NonExistentFlag").has_value());
 
-  for (const auto& test_case : expected) {
-    absl::optional<ResponseFlag> response_flag = ResponseFlagUtils::toResponseFlag(test_case.first);
+  for (const auto& [test_case_input, expected_response_flag] : expected) {
+    absl::optional<ResponseFlag> response_flag = ResponseFlagUtils::toResponseFlag(test_case_input);
     EXPECT_TRUE(response_flag.has_value());
-    EXPECT_EQ(test_case.second, response_flag.value());
+    EXPECT_EQ(expected_response_flag, response_flag.value());
   }
 }
 

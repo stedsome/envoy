@@ -216,14 +216,14 @@ public:
 void computeHitStats(benchmark::State& state,
                      const std::unordered_map<std::string, uint64_t>& hit_counter) {
   double mean = 0;
-  for (const auto& pair : hit_counter) {
-    mean += pair.second;
+  for (const auto& [address, counter] : hit_counter) {
+    mean += counter;
   }
   mean /= hit_counter.size();
 
   double variance = 0;
-  for (const auto& pair : hit_counter) {
-    variance += std::pow(pair.second - mean, 2);
+  for (const auto& [address, counter] : hit_counter) {
+    variance += std::pow(counter - mean, 2);
   }
   variance /= hit_counter.size();
   const double stddev = std::sqrt(variance);

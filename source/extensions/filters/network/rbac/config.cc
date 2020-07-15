@@ -62,11 +62,11 @@ static void validatePrincipal(const envoy::config::rbac::v3::Principal& principa
  * Validate the RBAC rules doesn't include any header or metadata rule.
  */
 static void validateRbacRules(const envoy::config::rbac::v3::RBAC& rules) {
-  for (const auto& policy : rules.policies()) {
-    for (const auto& permission : policy.second.permissions()) {
+  for (const auto& [policy_key, policy] : rules.policies()) {
+    for (const auto& permission : policy.permissions()) {
       validatePermission(permission);
     }
-    for (const auto& principal : policy.second.principals()) {
+    for (const auto& principal : policy.principals()) {
       validatePrincipal(principal);
     }
   }

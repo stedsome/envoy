@@ -156,8 +156,8 @@ void OverloadManagerImpl::start() {
   }
 
   timer_ = dispatcher_.createTimer([this]() -> void {
-    for (auto& resource : resources_) {
-      resource.second.update();
+    for (auto& [resource_name, resource] : resources_) {
+      resource.update();
     }
 
     timer_->enableTimer(refresh_interval_);

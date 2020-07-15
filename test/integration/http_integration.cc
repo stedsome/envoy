@@ -530,8 +530,7 @@ void HttpIntegrationTest::testRouterUpstreamDisconnectBeforeRequestComplete() {
   initialize();
   codec_client_ = makeHttpConnection(lookupPort("http"));
 
-  auto encoder_decoder = codec_client_->startRequest(default_request_headers_);
-  auto response = std::move(encoder_decoder.second);
+  auto [encoder_decoder_ref, response] = codec_client_->startRequest(default_request_headers_);
 
   ASSERT_TRUE(fake_upstreams_[0]->waitForHttpConnection(*dispatcher_, fake_upstream_connection_));
 
@@ -589,8 +588,7 @@ void HttpIntegrationTest::testRouterDownstreamDisconnectBeforeRequestComplete(
 
   codec_client_ = makeHttpConnection(
       create_connection ? ((*create_connection)()) : makeClientConnection((lookupPort("http"))));
-  auto encoder_decoder = codec_client_->startRequest(default_request_headers_);
-  auto response = std::move(encoder_decoder.second);
+  auto [encoder_decoder_ref, response] = codec_client_->startRequest(default_request_headers_);
   ASSERT_TRUE(fake_upstreams_[0]->waitForHttpConnection(*dispatcher_, fake_upstream_connection_));
   ASSERT_TRUE(fake_upstream_connection_->waitForNewStream(*dispatcher_, upstream_request_));
   ASSERT_TRUE(upstream_request_->waitForHeadersComplete());
@@ -648,8 +646,7 @@ void HttpIntegrationTest::testRouterDownstreamDisconnectBeforeResponseComplete(
 void HttpIntegrationTest::testRouterUpstreamResponseBeforeRequestComplete() {
   initialize();
   codec_client_ = makeHttpConnection(lookupPort("http"));
-  auto encoder_decoder = codec_client_->startRequest(default_request_headers_);
-  auto response = std::move(encoder_decoder.second);
+  auto [encoder_decoder_ref, response] = codec_client_->startRequest(default_request_headers_);
   ASSERT_TRUE(fake_upstreams_[0]->waitForHttpConnection(*dispatcher_, fake_upstream_connection_));
   ASSERT_TRUE(fake_upstream_connection_->waitForNewStream(*dispatcher_, upstream_request_));
   ASSERT_TRUE(upstream_request_->waitForHeadersComplete());
@@ -980,8 +977,7 @@ void HttpIntegrationTest::testLargeRequestUrl(uint32_t url_size, uint32_t max_he
   codec_client_ = makeHttpConnection(lookupPort("http"));
   if (url_size >= max_headers_size) {
     // header size includes keys too, so expect rejection when equal
-    auto encoder_decoder = codec_client_->startRequest(big_headers);
-    auto response = std::move(encoder_decoder.second);
+    auto [encoder_decoder_ref, response] = codec_client_->startRequest(big_headers);
 
     if (downstream_protocol_ == Http::CodecClient::Type::HTTP1) {
       ASSERT_TRUE(codec_client_->waitForDisconnect());
@@ -1027,8 +1023,7 @@ void HttpIntegrationTest::testLargeRequestHeaders(uint32_t size, uint32_t count,
   codec_client_ = makeHttpConnection(lookupPort("http"));
   if (size >= max_size || count > max_count) {
     // header size includes keys too, so expect rejection when equal
-    auto encoder_decoder = codec_client_->startRequest(big_headers);
-    auto response = std::move(encoder_decoder.second);
+    auto [encoder_decoder_ref, response] = codec_client_->startRequest(big_headers);
 
     if (downstream_protocol_ == Http::CodecClient::Type::HTTP1) {
       ASSERT_TRUE(codec_client_->waitForDisconnect());

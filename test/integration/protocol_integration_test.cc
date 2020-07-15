@@ -1083,12 +1083,11 @@ TEST_P(DownstreamProtocolIntegrationTest, InvalidContentLength) {
 
   codec_client_ = makeHttpConnection(lookupPort("http"));
 
-  auto encoder_decoder =
+  auto [encoder_decoder_ref, response] =
       codec_client_->startRequest(Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                                                  {":path", "/test/long/url"},
                                                                  {":authority", "host"},
                                                                  {"content-length", "-1"}});
-  auto response = std::move(encoder_decoder.second);
 
   ASSERT_TRUE(codec_client_->waitForDisconnect());
 
@@ -1114,12 +1113,11 @@ TEST_P(DownstreamProtocolIntegrationTest, InvalidContentLengthAllowed) {
 
   codec_client_ = makeHttpConnection(lookupPort("http"));
 
-  auto encoder_decoder =
+  auto [encoder_decoder_ref, response] =
       codec_client_->startRequest(Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                                                  {":path", "/test/long/url"},
                                                                  {":authority", "host"},
                                                                  {"content-length", "-1"}});
-  auto response = std::move(encoder_decoder.second);
 
   if (downstream_protocol_ == Http::CodecClient::Type::HTTP1) {
     ASSERT_TRUE(codec_client_->waitForDisconnect());
@@ -1140,12 +1138,11 @@ TEST_P(DownstreamProtocolIntegrationTest, InvalidContentLengthAllowed) {
 TEST_P(DownstreamProtocolIntegrationTest, MultipleContentLengths) {
   initialize();
   codec_client_ = makeHttpConnection(lookupPort("http"));
-  auto encoder_decoder =
+  auto [encoder_decoder_ref, response] =
       codec_client_->startRequest(Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                                                  {":path", "/test/long/url"},
                                                                  {":authority", "host"},
                                                                  {"content-length", "3,2"}});
-  auto response = std::move(encoder_decoder.second);
 
   ASSERT_TRUE(codec_client_->waitForDisconnect());
 
@@ -1168,12 +1165,11 @@ TEST_P(DownstreamProtocolIntegrationTest, MultipleContentLengthsAllowed) {
 
   initialize();
   codec_client_ = makeHttpConnection(lookupPort("http"));
-  auto encoder_decoder =
+  auto [encoder_decoder_ref, response] =
       codec_client_->startRequest(Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                                                  {":path", "/test/long/url"},
                                                                  {":authority", "host"},
                                                                  {"content-length", "3,2"}});
-  auto response = std::move(encoder_decoder.second);
 
   if (downstream_protocol_ == Http::CodecClient::Type::HTTP1) {
     ASSERT_TRUE(codec_client_->waitForDisconnect());

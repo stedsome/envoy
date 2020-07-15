@@ -142,8 +142,8 @@ public:
   // Envoy::Config::ConfigProviderManagerImplBase
   ProtobufTypes::MessagePtr dumpConfigs() const override {
     auto config_dump = std::make_unique<test::common::config::DummyConfigsDump>();
-    for (const auto& element : configSubscriptions()) {
-      auto subscription = element.second.lock();
+    for (const auto& [element_key, element] : configSubscriptions()) {
+      auto subscription = element.lock();
       ASSERT(subscription);
 
       if (subscription->configInfo()) {
@@ -580,8 +580,8 @@ public:
   // Envoy::Config::ConfigProvider
   ConfigProtoVector getConfigProtos() const override {
     ConfigProtoVector proto_vector;
-    for (const auto& value_type : subscription_->protoMap()) {
-      proto_vector.push_back(&value_type.second);
+    for (const auto& [map_key, proto_value] : subscription_->protoMap()) {
+      proto_vector.push_back(&proto_value);
     }
     return proto_vector;
   }
@@ -604,8 +604,8 @@ public:
   // Envoy::Config::ConfigProviderManagerImplBase
   ProtobufTypes::MessagePtr dumpConfigs() const override {
     auto config_dump = std::make_unique<test::common::config::DeltaDummyConfigsDump>();
-    for (const auto& element : configSubscriptions()) {
-      auto subscription = element.second.lock();
+    for (const auto& [element_key, element] : configSubscriptions()) {
+      auto subscription = element.lock();
       ASSERT(subscription);
 
       if (subscription->configInfo()) {
@@ -614,8 +614,8 @@ public:
         const auto* typed_subscription =
             static_cast<DeltaDummyConfigSubscription*>(subscription.get());
         const DeltaDummyConfigSubscription::ProtoMap& proto_map = typed_subscription->protoMap();
-        for (const auto& value_type : proto_map) {
-          dynamic_config->mutable_dummy_configs()->Add()->MergeFrom(value_type.second);
+        for (const auto& [map_key, proto_value] : proto_map) {
+          dynamic_config->mutable_dummy_configs()->Add()->MergeFrom(proto_value);
         }
         TimestampUtil::systemClockToTimestamp(subscription->lastUpdated(),
                                               *dynamic_config->mutable_last_updated());

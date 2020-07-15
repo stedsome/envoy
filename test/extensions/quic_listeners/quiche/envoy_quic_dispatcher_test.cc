@@ -59,10 +59,11 @@ public:
         crypto_config_(quic::QuicCryptoServerConfig::TESTING, quic::QuicRandom::GetInstance(),
                        std::make_unique<TestProofSource>(), quic::KeyExchangeSource::Default()),
         version_manager_([]() {
-          if (GetParam().second == QuicVersionType::GquicQuicCrypto) {
+          const auto& [version, quic_version_type] = GetParam();
+          if (quic_version_type == QuicVersionType::GquicQuicCrypto) {
             return quic::CurrentSupportedVersionsWithQuicCrypto();
           }
-          bool use_http3 = GetParam().second == QuicVersionType::Iquic;
+          bool use_http3 = quic_version_type == QuicVersionType::Iquic;
           SetQuicReloadableFlag(quic_enable_version_draft_29, use_http3);
           SetQuicReloadableFlag(quic_disable_version_draft_27, !use_http3);
           SetQuicReloadableFlag(quic_disable_version_draft_25, !use_http3);

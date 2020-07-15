@@ -37,8 +37,9 @@ TEST(RegistryTest, InternalFactoryNotPublished) {
   TestInternalFactory test;
 
   // Expect that the published categories don't lead to the internal factory.
-  for (const auto& ext : Envoy::Registry::FactoryCategoryRegistry::registeredFactories()) {
-    for (const auto& name : ext.second->registeredNames()) {
+  for (const auto& [factory_name, ext_factory] :
+       Envoy::Registry::FactoryCategoryRegistry::registeredFactories()) {
+    for (const auto& name : ext_factory->registeredNames()) {
       EXPECT_NE(name, test.name());
     }
   }

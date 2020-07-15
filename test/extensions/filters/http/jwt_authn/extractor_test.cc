@@ -62,8 +62,8 @@ public:
   void SetUp() override {
     TestUtility::loadFromYaml(ExampleConfig, config_);
     JwtProviderList providers;
-    for (const auto& it : config_.providers()) {
-      providers.emplace_back(&it.second);
+    for (const auto& [provider_key, provider] : config_.providers()) {
+      providers.emplace_back(&provider);
     }
     extractor_ = Extractor::create(providers);
   }

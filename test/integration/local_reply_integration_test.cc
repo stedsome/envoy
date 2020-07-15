@@ -45,13 +45,12 @@ body_format:
 
   codec_client_ = makeHttpConnection(lookupPort("http"));
 
-  auto encoder_decoder = codec_client_->startRequest(
+  auto [encoder_decoder_ref, response] = codec_client_->startRequest(
       Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                      {":path", "/test/long/url"},
                                      {":scheme", "http"},
                                      {":authority", "host"},
                                      {"test-header", "exact-match-value"}});
-  auto response = std::move(encoder_decoder.second);
 
   ASSERT_TRUE(fake_upstreams_[0]->waitForHttpConnection(*dispatcher_, fake_upstream_connection_));
 
@@ -97,13 +96,12 @@ body_format:
 
   codec_client_ = makeHttpConnection(lookupPort("http"));
 
-  auto encoder_decoder = codec_client_->startRequest(
+  auto [encoder_decoder_ref, response] = codec_client_->startRequest(
       Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                      {":path", "/package.service/method"},
                                      {":scheme", "http"},
                                      {":authority", "host"},
                                      {"content-type", "application/grpc"}});
-  auto response = std::move(encoder_decoder.second);
 
   ASSERT_TRUE(fake_upstreams_[0]->waitForHttpConnection(*dispatcher_, fake_upstream_connection_));
 
@@ -170,13 +168,12 @@ body_format:
 
   codec_client_ = makeHttpConnection(lookupPort("http"));
 
-  auto encoder_decoder = codec_client_->startRequest(
+  auto [encoder_decoder_ref, response] = codec_client_->startRequest(
       Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                      {":path", "/test/long/url"},
                                      {":scheme", "http"},
                                      {":authority", "host"},
                                      {"test-header", "exact-match-value"}});
-  auto response = std::move(encoder_decoder.second);
 
   ASSERT_TRUE(fake_upstreams_[0]->waitForHttpConnection(*dispatcher_, fake_upstream_connection_));
 
@@ -242,13 +239,12 @@ body_format:
 
   codec_client_ = makeHttpConnection(lookupPort("http"));
 
-  auto encoder_decoder = codec_client_->startRequest(
+  auto [encoder_decoder_ref, response] = codec_client_->startRequest(
       Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                      {":path", "/test/long/url"},
                                      {":scheme", "http"},
                                      {":authority", "host"},
                                      {"test-header", "exact-match-value"}});
-  auto response = std::move(encoder_decoder.second);
 
   ASSERT_TRUE(fake_upstreams_[0]->waitForHttpConnection(*dispatcher_, fake_upstream_connection_));
 
@@ -303,13 +299,12 @@ mappers:
 
   codec_client_ = makeHttpConnection(lookupPort("http"));
 
-  auto encoder_decoder = codec_client_->startRequest(
+  auto [encoder_decoder_ref, response] = codec_client_->startRequest(
       Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                      {":path", "/test/long/url"},
                                      {":scheme", "http"},
                                      {":authority", "host"},
                                      {"test-header", "exact-match-value-2"}});
-  auto response = std::move(encoder_decoder.second);
 
   ASSERT_TRUE(fake_upstreams_[0]->waitForHttpConnection(*dispatcher_, fake_upstream_connection_));
 
@@ -360,13 +355,12 @@ body_format:
 
   codec_client_ = makeHttpConnection(lookupPort("http"));
 
-  auto encoder_decoder = codec_client_->startRequest(
+  auto [encoder_decoder_ref, response] = codec_client_->startRequest(
       Http::TestRequestHeaderMapImpl{{":method", "POST"},
                                      {":path", "/test/long/url"},
                                      {":scheme", "http"},
                                      {":authority", "host"},
                                      {"test-header", "exact-match-value-2"}});
-  auto response = std::move(encoder_decoder.second);
 
   ASSERT_TRUE(fake_upstreams_[0]->waitForHttpConnection(*dispatcher_, fake_upstream_connection_));
 

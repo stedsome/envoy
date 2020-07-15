@@ -24,8 +24,7 @@ namespace {
  * Validate inline jwks, make sure they are the valid
  */
 void validateJwtConfig(const JwtAuthentication& proto_config, Api::Api& api) {
-  for (const auto& it : proto_config.providers()) {
-    const auto& provider = it.second;
+  for (const auto& [provider_name, provider] : proto_config.providers()) {
     const auto inline_jwks = Config::DataSource::read(provider.local_jwks(), true, api);
     if (!inline_jwks.empty()) {
       auto jwks_obj = Jwks::createFrom(inline_jwks, Jwks::JWKS);

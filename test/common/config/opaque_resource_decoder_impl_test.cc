@@ -96,9 +96,9 @@ TEST_F(OpaqueResourceDecoderImplTest, HiddenEnvoyDeprecatedFields) {
 TEST_F(OpaqueResourceDecoderImplTest, Success) {
   envoy::config::endpoint::v3::ClusterLoadAssignment cluster_resource;
   cluster_resource.set_cluster_name("foo");
-  const auto result = decodeTypedResource(cluster_resource);
-  EXPECT_THAT(*result.first, ProtoEq(cluster_resource));
-  EXPECT_EQ("foo", result.second);
+  const auto [resource, name] = decodeTypedResource(cluster_resource);
+  EXPECT_THAT(*resource, ProtoEq(cluster_resource));
+  EXPECT_EQ("foo", name);
 }
 
 } // namespace

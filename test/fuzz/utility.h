@@ -69,9 +69,9 @@ replaceInvalidStringValues(const envoy::config::core::v3::Metadata& upstream_met
     // values can be null, a number, a string, a boolean, a list of values, or a recursive struct.
     // This clears any invalid characters in string values. It may not be likely a coverage-driven
     // fuzzer will explore recursive structs, so this case is not handled here.
-    for (auto& field : *metadata_struct.second.mutable_fields()) {
-      if (field.second.kind_case() == ProtobufWkt::Value::kStringValue) {
-        field.second.set_string_value(replaceInvalidCharacters(field.second.string_value()));
+    for (auto& [key, value] : *metadata_struct.second.mutable_fields()) {
+      if (value.kind_case() == ProtobufWkt::Value::kStringValue) {
+        value.set_string_value(replaceInvalidCharacters(value.string_value()));
       }
     }
   }
@@ -138,10 +138,11 @@ inline TestStreamInfo fromStreamInfo(const test::fuzz::StreamInfo& stream_info) 
   test_stream_info.metadata_ = stream_info.dynamic_metadata();
   // Truncate recursive filter metadata fields.
   // TODO(asraa): Resolve MessageToJsonString failure on recursive filter metadata.
-  for (auto& pair : *test_stream_info.metadata_.mutable_filter_metadata()) {
+  for (auto& [metadata_key, metadata_struct] :
+       *test_stream_info.metadata_.mutable_filter_metadata()) {
     std::string value;
-    pair.second.SerializeToString(&value);
-    pair.second.ParseFromString(value.substr(0, 128));
+    metadata_struct.SerializeToString(&value);
+    metadata_struct.ParseFromString(value.substr(0, 128));
   }
   // libc++ clocks don't track at nanosecond on macOS.
   const auto start_time =

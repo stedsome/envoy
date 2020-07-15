@@ -1145,8 +1145,8 @@ TEST_F(DnsFilterTest, RandomizeFirstAnswerTest) {
   const std::list<std::string> defined_order{"10.0.16.1", "10.0.16.2", "10.0.16.3", "10.0.16.4",
                                              "10.0.16.5", "10.0.16.6", "10.0.16.7", "10.0.16.8"};
   auto defined_answer_iter = defined_order.begin();
-  for (const auto& answer : query_ctx_->answers_) {
-    const auto resolved_address = answer.second->ip_addr_->ip()->addressAsString();
+  for (const auto& [answer_key, answer_record] : query_ctx_->answers_) {
+    const auto resolved_address = answer_record->ip_addr_->ip()->addressAsString();
     EXPECT_NE(0L, resolved_address.compare(*defined_answer_iter++));
   }
 }

@@ -605,13 +605,13 @@ FilterConfig::FilterConfig(const envoy::extensions::filters::http::lua::v3::Lua&
     per_lua_code_setups_map_[GLOBAL_SCRIPT_NAME] = std::move(global_setup_ptr);
   }
 
-  for (const auto& source : proto_config.source_codes()) {
-    const std::string code = Config::DataSource::read(source.second, true, api);
+  for (const auto& [source_key, source] : proto_config.source_codes()) {
+    const std::string code = Config::DataSource::read(source, true, api);
     auto per_lua_code_setup_ptr = std::make_unique<PerLuaCodeSetup>(code, tls);
     if (!per_lua_code_setup_ptr) {
       continue;
     }
-    per_lua_code_setups_map_[source.first] = std::move(per_lua_code_setup_ptr);
+    per_lua_code_setups_map_[source_key] = std::move(per_lua_code_setup_ptr);
   }
 }
 

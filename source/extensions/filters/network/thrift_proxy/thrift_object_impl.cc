@@ -253,11 +253,11 @@ void ThriftMapValueImpl::delegateComplete() {
   }
 
   // Prepare for any element's value.
-  auto& elem = elements_.back();
-  if (elem.second == nullptr) {
+  auto& [elem_key, elem] = elements_.back();
+  if (elem == nullptr) {
     auto value = makeValue(this, elem_type_);
     delegate_ = value.get();
-    elem.second = std::move(value);
+    elem = std::move(value);
 
     remaining_--;
     return;

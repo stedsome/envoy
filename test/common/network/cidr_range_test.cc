@@ -71,17 +71,20 @@ TEST(TruncateIpAddressAndLength, Various) {
   test_cases.size();
   for (const auto& kv : test_cases) {
     const auto& [key, value] = kv;
-    InstanceConstSharedPtr inPtr = Utility::parseInternetAddress(key.first);
-    EXPECT_NE(inPtr, nullptr) << key.first;
-    int length_io = key.second;
+    const auto [address, length] = key;
+    const auto& [result_address, result_length] = value;
+    InstanceConstSharedPtr inPtr = Utility::parseInternetAddress(address);
+    EXPECT_NE(inPtr, nullptr) << address;
+    int length_io = length;
     InstanceConstSharedPtr outPtr = CidrRange::truncateIpAddressAndLength(inPtr, &length_io);
-    if (value.second == -1) {
+
+    if (result_length == -1) {
       EXPECT_EQ(outPtr, nullptr) << outPtr->asString() << "\n" << kv;
       EXPECT_EQ(length_io, -1) << kv;
     } else {
       ASSERT_NE(outPtr, nullptr) << kv;
-      EXPECT_EQ(outPtr->ip()->addressAsString(), value.first) << kv;
-      EXPECT_EQ(length_io, value.second) << kv;
+      EXPECT_EQ(outPtr->ip()->addressAsString(), result_address) << kv;
+      EXPECT_EQ(length_io, result_length) << kv;
     }
   }
 }
@@ -382,10 +385,10 @@ TEST(Ipv6CidrRange, BigRange) {
 Protobuf::RepeatedPtrField<envoy::config::core::v3::CidrRange>
 makeCidrRangeList(const std::vector<std::pair<std::string, uint32_t>>& ranges) {
   Protobuf::RepeatedPtrField<envoy::config::core::v3::CidrRange> ret;
-  for (auto& range : ranges) {
+  for (auto& [range_key, range] : ranges) {
     auto new_element = ret.Add();
-    new_element->set_address_prefix(range.first);
-    new_element->mutable_prefix_len()->set_value(range.second);
+    new_element->set_address_prefix(range_key);
+    new_element->mutable_prefix_len()->set_value(range);
   }
   return ret;
 }

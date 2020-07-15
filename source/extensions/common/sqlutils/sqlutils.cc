@@ -22,10 +22,10 @@ bool SQLUtils::setMetadata(const std::string& query, ProtobufWkt::Struct& metada
     hsql::TableAccessMap table_access_map;
     // Get names of accessed tables.
     result.getStatement(i)->tablesAccessed(table_access_map);
-    for (auto& it : table_access_map) {
-      auto& operations = *fields[it.first].mutable_list_value();
+    for (auto& [table_name, table] : table_access_map) {
+      auto& operations = *fields[table_name].mutable_list_value();
       // For each table get names of operations performed on that table.
-      for (const auto& ot : it.second) {
+      for (const auto& ot : table) {
         operations.add_values()->set_string_value(ot);
       }
     }

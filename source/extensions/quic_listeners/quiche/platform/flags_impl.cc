@@ -36,8 +36,8 @@ FlagRegistry& FlagRegistry::GetInstance() {
 FlagRegistry::FlagRegistry() : flags_(MakeFlagMap()) {}
 
 void FlagRegistry::ResetFlags() const {
-  for (auto& kv : flags_) {
-    kv.second->ResetValue();
+  for (auto& [key, val] : flags_) {
+    val->ResetValue();
   }
 }
 

@@ -300,8 +300,8 @@ void AdminImpl::addCircuitSettings(const std::string& cluster_name, const std::s
 // TODO(efimki): Add support of text readouts stats.
 void AdminImpl::writeClustersAsJson(Buffer::Instance& response) {
   envoy::admin::v3::Clusters clusters;
-  for (auto& cluster_pair : server_.clusterManager().clusters()) {
-    const Upstream::Cluster& cluster = cluster_pair.second.get();
+  for (auto& [cluster_name, cluster_value] : server_.clusterManager().clusters()) {
+    const Upstream::Cluster& cluster = cluster_value.get();
     Upstream::ClusterInfoConstSharedPtr cluster_info = cluster.info();
 
     envoy::admin::v3::ClusterStatus& cluster_status = *clusters.add_cluster_statuses();
@@ -561,8 +561,8 @@ void AdminImpl::addLbEndpoint(
 ProtobufTypes::MessagePtr AdminImpl::dumpEndpointConfigs() const {
   auto endpoint_config_dump = std::make_unique<envoy::admin::v3::EndpointsConfigDump>();
 
-  for (auto& cluster_pair : server_.clusterManager().clusters()) {
-    const Upstream::Cluster& cluster = cluster_pair.second.get();
+  for (auto& [cluster_name, cluster_value] : server_.clusterManager().clusters()) {
+    const Upstream::Cluster& cluster = cluster_value.get();
     Upstream::ClusterInfoConstSharedPtr cluster_info = cluster.info();
     envoy::config::endpoint::v3::ClusterLoadAssignment cluster_load_assignment;
 

@@ -249,8 +249,8 @@ TEST_P(TapMatcherGenericBodyTest, GenericBodyTest) {
       matchers_[0]->onResponseBody(data_, statuses_);
     }
   }
-  const std::pair<bool, bool>& expected = std::get<2>(text_and_result);
-  EXPECT_EQ((Matcher::MatchStatus{expected.first, expected.second}),
+  const auto& [response_status_one, response_status_two] = std::get<2>(text_and_result);
+  EXPECT_EQ((Matcher::MatchStatus{response_status_one, response_status_two}),
             matchers_[0]->matchStatus(statuses_));
 }
 
