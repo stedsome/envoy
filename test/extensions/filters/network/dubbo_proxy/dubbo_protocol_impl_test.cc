@@ -41,9 +41,9 @@ TEST(DubboProtocolImplTest, Normal) {
 
     auto [context, decode_status] = dubbo_protocol.decodeHeader(buffer, metadata);
     EXPECT_TRUE(decode_status);
-    EXPECT_EQ(1, metadata->request_id());
-    EXPECT_EQ(1, context->body_size());
-    EXPECT_EQ(MessageType::Request, metadata->message_type());
+    EXPECT_EQ(1, metadata->requestId());
+    EXPECT_EQ(1, context->bodySize());
+    EXPECT_EQ(MessageType::Request, metadata->messageType());
   }
 
   // Normal dubbo response message
@@ -55,9 +55,9 @@ TEST(DubboProtocolImplTest, Normal) {
     addInt32(buffer, 1);
     auto [context, decode_status] = dubbo_protocol.decodeHeader(buffer, metadata);
     EXPECT_TRUE(decode_status);
-    EXPECT_EQ(1, metadata->request_id());
-    EXPECT_EQ(1, context->body_size());
-    EXPECT_EQ(MessageType::Response, metadata->message_type());
+    EXPECT_EQ(1, metadata->requestId());
+    EXPECT_EQ(1, context->bodySize());
+    EXPECT_EQ(MessageType::Response, metadata->messageType());
   }
 }
 
@@ -132,19 +132,19 @@ TEST(DubboProtocolImplTest, encode) {
   auto [context, decode_status] = dubbo_protocol.decodeHeader(buffer, output_metadata);
   EXPECT_TRUE(decode_status);
 
-  EXPECT_EQ(metadata.message_type(), output_metadata->message_type());
-  EXPECT_EQ(metadata.response_status(), output_metadata->response_status());
-  EXPECT_EQ(metadata.serialization_type(), output_metadata->serialization_type());
-  EXPECT_EQ(metadata.request_id(), output_metadata->request_id());
+  EXPECT_EQ(metadata.messageType(), output_metadata->messageType());
+  EXPECT_EQ(metadata.responseStatus(), output_metadata->responseStatus());
+  EXPECT_EQ(metadata.serializationType(), output_metadata->serializationType());
+  EXPECT_EQ(metadata.requestId(), output_metadata->requestId());
 
   Buffer::OwnedImpl body_buffer;
   size_t serialized_body_size = dubbo_protocol.serializer()->serializeRpcResult(
       body_buffer, content, RpcResponseType::ResponseWithValue);
-  EXPECT_EQ(context->body_size(), serialized_body_size);
+  EXPECT_EQ(context->bodySize(), serialized_body_size);
   EXPECT_EQ(false, context->hasAttachments());
   EXPECT_EQ(0, context->attachments().size());
 
-  buffer.drain(context->header_size());
+  buffer.drain(context->headerSize());
   EXPECT_TRUE(dubbo_protocol.decodeData(buffer, context, output_metadata));
 }
 
@@ -210,10 +210,10 @@ TEST(DubboProtocolImplTest, decode) {
     addInt32(buffer, 1);
     auto [context, decode_status] = dubbo_protocol.decodeHeader(buffer, metadata);
     EXPECT_TRUE(decode_status);
-    EXPECT_EQ(1, context->body_size());
-    EXPECT_EQ(MessageType::Request, metadata->message_type());
-    EXPECT_EQ(1, metadata->request_id());
-    EXPECT_EQ(SerializationType::Hessian2, metadata->serialization_type());
+    EXPECT_EQ(1, context->bodySize());
+    EXPECT_EQ(MessageType::Request, metadata->messageType());
+    EXPECT_EQ(1, metadata->requestId());
+    EXPECT_EQ(SerializationType::Hessian2, metadata->serializationType());
     buffer.drain(buffer.length());
   }
 
@@ -224,10 +224,10 @@ TEST(DubboProtocolImplTest, decode) {
     addInt32(buffer, 1);
     auto [context, decode_status] = dubbo_protocol.decodeHeader(buffer, metadata);
     EXPECT_TRUE(decode_status);
-    EXPECT_EQ(1, context->body_size());
-    EXPECT_EQ(MessageType::Oneway, metadata->message_type());
-    EXPECT_EQ(1, metadata->request_id());
-    EXPECT_EQ(SerializationType::Hessian2, metadata->serialization_type());
+    EXPECT_EQ(1, context->bodySize());
+    EXPECT_EQ(MessageType::Oneway, metadata->messageType());
+    EXPECT_EQ(1, metadata->requestId());
+    EXPECT_EQ(SerializationType::Hessian2, metadata->serializationType());
   }
 }
 

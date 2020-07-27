@@ -35,6 +35,25 @@ private:
   absl::optional<double> value_;
 };
 
+/**
+ * Thread-local copy of the state of each configured overload action.
+ */
+class ThreadLocalOverloadStateImpl : public ThreadLocalOverloadState {
+public:
+  const OverloadActionState& getState(const std::string& action) override {
+    auto it = actions_.find(action);
+    if (it == actions_.end()) {
+      it = actions_.insert(std::make_pair(action, OverloadActionState::Inactive)).first;
+    }
+    return it->second;
+  }
+
+  void setState(const std::string& action, OverloadActionState state) { actions_[action] = state; }
+
+private:
+  std::unordered_map<std::string, OverloadActionState> actions_;
+};
+
 Stats::Counter& makeCounter(Stats::Scope& scope, absl::string_view a, absl::string_view b) {
   Stats::StatNameManagedStorage stat_name(absl::StrCat("overload.", a, ".", b),
                                           scope.symbolTable());
@@ -148,7 +167,7 @@ void OverloadManagerImpl::start() {
   started_ = true;
 
   tls_->set([](Event::Dispatcher&) -> ThreadLocal::ThreadLocalObjectSharedPtr {
-    return std::make_shared<ThreadLocalOverloadState>();
+    return std::make_shared<ThreadLocalOverloadStateImpl>();
   });
 
   if (resources_.empty()) {
@@ -191,27 +210,24 @@ bool OverloadManagerImpl::registerForAction(const std::string& action,
 }
 
 ThreadLocalOverloadState& OverloadManagerImpl::getThreadLocalOverloadState() {
-  return tls_->getTyped<ThreadLocalOverloadState>();
+  return tls_->getTyped<ThreadLocalOverloadStateImpl>();
 }
 
 void OverloadManagerImpl::updateResourcePressure(const std::string& resource, double pressure) {
   auto [action_range_start, action_range_end] = resource_to_actions_.equal_range(resource);
-  std::for_each(action_range_start, action_range_end, [&](ResourceToActionMap::value_type& entry) {
-    const std::string& action = entry.second;
-    auto action_it = actions_.find(action);
-    ASSERT(action_it != actions_.end());
-    if (action_it->second.updateResourcePressure(resource, pressure)) {
-      const bool is_active = action_it->second.isActive();
-      const auto state = is_active ? OverloadActionState::Active : OverloadActionState::Inactive;
-      ENVOY_LOG(info, "Overload action {} became {}", action, is_active ? "active" : "inactive");
-      tls_->runOnAllThreads([this, action, state] {
-        tls_->getTyped<ThreadLocalOverloadState>().setState(action, state);
-      });
-      auto [callback_range_start, callback_range_end] = action_to_callbacks_.equal_range(action);
-      std::for_each(callback_range_start, callback_range_end,
-                    [&](ActionToCallbackMap::value_type& cb_entry) {
-                      auto& cb = cb_entry.second;
-                      cb.dispatcher_.post([&, state]() { cb.callback_(state); });
+  std::for_each(action_range_start, action_range_end,
+                [&](ResourceToActionMap::value_type& entry) {
+                  const std::string& action = entry.second;
+                  auto action_it = actions_.find(action);
+                  ASSERT(action_it != actions_.end());
+                  if (action_it->second.updateResourcePressure(resource, pressure)) {
+                    const bool is_active = action_it->second.isActive();
+                    const auto state =
+                        is_active ? OverloadActionState::Active : OverloadActionState::Inactive;
+                    ENVOY_LOG(info, "Overload action {} became {}", action,
+                              is_active ? "active" : "inactive");
+                    tls_->runOnAllThreads([this, action, state] {
+                      tls_->getTyped<ThreadLocalOverloadStateImpl>().setState(action, state);
                     });
     }
   });
